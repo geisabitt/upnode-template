@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
+import { prisma } from '@/core/lib/prisma'
 
 type Params = {
   params: { id: string } | Promise<{ id: string }>

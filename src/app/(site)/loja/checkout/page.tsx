@@ -1,9 +1,9 @@
 //src/app/checkout/page.tsx
 'use client'
 
-import CheckoutForm from '@/components/CheckoutForm'
+import CheckoutForm from '@/core/components/CheckoutForm'
 import Link from 'next/link'
-import { useCart } from '@/context/CartContext'
+import { useCart } from '@/core/context/CartContext'
 
 export default function CheckoutPage() {
   const { items } = useCart()

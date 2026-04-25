@@ -1,7 +1,7 @@
 // src/app/api/orders/route.ts
-import { checkoutSchema } from '@/lib/validators/checkoutSchema'
+import { checkoutSchema } from '@/core/lib/validators/checkoutSchema'
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
+import { prisma } from '@/core/lib/prisma'
 import { ValidationError } from 'yup'
 
 // ✅ GET - Listar pedidos

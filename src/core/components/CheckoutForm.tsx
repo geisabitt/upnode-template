@@ -2,8 +2,8 @@
 
 import { useForm } from 'react-hook-form'
 import { yupResolver } from '@hookform/resolvers/yup'
-import { checkoutSchema } from '@/lib/validators/checkoutSchema'
-import { useCart } from '@/context/CartContext'
+import { checkoutSchema } from '@/core/lib/validators/checkoutSchema'
+import { useCart } from '@/core/context/CartContext'
 import { useRouter } from 'next/navigation'
 import { toast } from 'react-hot-toast'
 import * as yup from 'yup'

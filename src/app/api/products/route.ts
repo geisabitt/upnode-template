@@ -1,5 +1,5 @@
 // src/app/api/products/route.ts
-import { prisma } from '@/lib/prisma'
+import { prisma } from '@/core/lib/prisma'
 import { NextResponse } from 'next/server'
 
 type ColorInput = {

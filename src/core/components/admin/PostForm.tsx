@@ -3,9 +3,9 @@
 import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { useRouter } from 'next/navigation'
-import DeletePostButton from '@/components/admin/DeletePostButton'
+import DeletePostButton from '@/core/components/admin/DeletePostButton'
 import toast from 'react-hot-toast'
-import type { Category, Post, PostFormData } from '@/types/admin'
+import type { Category, Post, PostFormData } from '@/core/types/admin'
 
 type Props = {
   mode: 'create' | 'edit'

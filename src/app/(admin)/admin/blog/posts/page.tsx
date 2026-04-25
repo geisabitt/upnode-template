@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import Image from 'next/image'
-import { prisma } from '@/lib/prisma'
-import DeletePostButton from '@/components/admin/DeletePostButton'
+import { prisma } from '@/core/lib/prisma'
+import DeletePostButton from '@/core/components/admin/DeletePostButton'
 
 export const dynamic = 'force-dynamic'
 

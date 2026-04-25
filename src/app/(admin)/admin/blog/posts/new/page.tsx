@@ -1,7 +1,7 @@
 // src/app/(admin)/admin/posts/new/page.tsx
 
-import { prisma } from '@/lib/prisma'
-import PostForm from '@/components/admin/PostForm'
+import { prisma } from '@/core/lib/prisma'
+import PostForm from '@/core/components/admin/PostForm'
 
 export default async function NewPostPage() {
   const categories = await prisma.blogCategory.findMany({

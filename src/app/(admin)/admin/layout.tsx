@@ -7,7 +7,7 @@ import { Menu, X } from 'lucide-react'
 import { Geist, Geist_Mono } from 'next/font/google'
 import '@/app/globals.css'
 import { Toaster } from 'react-hot-toast'
-import { LogoutButton } from '@/components/admin/LogoutButton'
+import { LogoutButton } from '@/core/components/admin/LogoutButton'
 
 const geistSans = Geist({
   variable: '--font-geist-sans',

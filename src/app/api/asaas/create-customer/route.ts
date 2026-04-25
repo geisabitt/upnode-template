@@ -21,7 +21,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { asaasFetch, AsaasCustomer } from '@/lib/asaas';
+import { asaasFetch, AsaasCustomer } from '@/core/lib/asaas';
 import * as yup from 'yup';
 
 export const runtime = 'nodejs';

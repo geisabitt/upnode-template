@@ -1,10 +1,10 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "@/app/globals.css";
-import Header from "@/components/Header";
-import { CartProvider } from '@/context/CartContext';
+import Header from "@/core/components/Header";
+import { CartProvider } from '@/core/context/CartContext';
 import { Toaster } from "react-hot-toast";
-import Footer from "@/components/Footer";
+import Footer from "@/core/components/Footer";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",

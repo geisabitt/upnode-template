@@ -1,5 +1,5 @@
-import { prisma } from '@/lib/prisma'
-import CategoryForm from '@/components/admin/CategoryForm'
+import { prisma } from '@/core/lib/prisma'
+import CategoryForm from '@/core/components/admin/CategoryForm'
 
 export default async function EditCategoryPage(
   { params }: { params: Promise<{ id: string }> }

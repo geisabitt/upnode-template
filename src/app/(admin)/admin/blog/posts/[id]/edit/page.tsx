@@ -1,8 +1,8 @@
 // src/app/(admin)/admin/posts/[id]/edit/page.tsx
 
-import { prisma } from '@/lib/prisma'
+import { prisma } from '@/core/lib/prisma'
 import { notFound } from 'next/navigation'
-import PostForm from '@/components/admin/PostForm'
+import PostForm from '@/core/components/admin/PostForm'
 
 type Props = {
   params: Promise<{ id: string }>

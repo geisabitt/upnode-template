@@ -1,8 +1,8 @@
 // src/app/api/mercado-pago/webhook/route.ts
 
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
-import { fetchMercadoPagoPayment } from '@/lib/mercado-pago-security'
+import { prisma } from '@/core/lib/prisma'
+import { fetchMercadoPagoPayment } from '@/core/lib/mercado-pago-security'
 
 const TOKEN = process.env.MERCADO_PAGO_ACCESS_TOKEN!
 

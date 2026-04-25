@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { asaasFetch, AsaasPayment } from '@/lib/asaas';
+import { asaasFetch, AsaasPayment } from '@/core/lib/asaas';
 import * as yup from 'yup';
 
 export const runtime = 'nodejs';

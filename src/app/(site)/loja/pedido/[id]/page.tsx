@@ -1,6 +1,6 @@
-import { prisma } from '@/lib/prisma'
+import { prisma } from '@/core/lib/prisma'
 import { notFound } from 'next/navigation'
-import { PagarNovamenteButton } from '@/components/PagarNovamenteButton'
+import { PagarNovamenteButton } from '@/core/components/PagarNovamenteButton'
 
 interface PedidoPageProps {
   params: Promise<{ id: string }>

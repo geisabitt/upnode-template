@@ -1,7 +1,7 @@
 // lib/auth.ts
 
 import bcrypt from 'bcryptjs'
-import { prisma } from '@/lib/prisma'
+import { prisma } from '@/core/lib/prisma'
 
 export interface AdminUserPayload {
   id: string

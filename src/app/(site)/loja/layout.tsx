@@ -1,4 +1,4 @@
-import CategoriasMenu from "@/components/CategoriasMenu";
+import CategoriasMenu from "@/core/components/CategoriasMenu";
 
 export default function LojaLayout({
   children,

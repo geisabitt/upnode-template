@@ -5,8 +5,8 @@ import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import toast from 'react-hot-toast'
-import { normalizeYouTubeUrl } from '@/lib/youtube'
-import type { Category, ProductImage, AdminProduct, ProductFormData } from '@/types/admin'
+import { normalizeYouTubeUrl } from '@/core/lib/youtube'
+import type { Category, ProductImage, AdminProduct, ProductFormData } from '@/core/types/admin'
 
 type Props = {
   mode: 'create' | 'edit'

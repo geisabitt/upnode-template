@@ -1,9 +1,9 @@
 // api/admim/auth/login/route.ts
 
 import { NextResponse } from 'next/server'
-import { validateAdminCredentials, ensureDefaultAdmin } from '@/lib/auth'
-import { logAccess } from '@/lib/logger'
-import { createAuthToken, createAuthCookie } from '@/lib/session'
+import { validateAdminCredentials, ensureDefaultAdmin } from '@/core/lib/auth'
+import { logAccess } from '@/core/lib/logger'
+import { createAuthToken, createAuthCookie } from '@/core/lib/session'
 
 export async function POST(request: Request) {
   await ensureDefaultAdmin()

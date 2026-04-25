@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { CustomPage } from '@prisma/client'
 import toast from 'react-hot-toast'
-import type { FAQItem } from '@/types/admin'
+import type { FAQItem } from '@/core/types/admin'
 
 type Props = {
   page: CustomPage

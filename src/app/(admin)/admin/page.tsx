@@ -1,8 +1,8 @@
 // src/app/(admin)/admin/page.tsx
-import { prisma } from '@/lib/prisma'
+import { prisma } from '@/core/lib/prisma'
 import { subDays, format, eachDayOfInterval } from 'date-fns'
-import { OrdersTable } from '@/components/admin/OrdersTable'
-import { SalesChart } from '@/components/admin/SalesChart'
+import { OrdersTable } from '@/core/components/admin/OrdersTable'
+import { SalesChart } from '@/core/components/admin/SalesChart'
 
 async function getDashboardData() {
   const from = subDays(new Date(), 29)

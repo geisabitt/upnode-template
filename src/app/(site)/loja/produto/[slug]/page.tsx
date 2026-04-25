@@ -1,6 +1,6 @@
 import Link from 'next/link'
-import ProductDetailClient, { ProductDetailClientProps } from '@/components/ProductDetailClient'
-import prisma from '@/lib/prisma'
+import ProductDetailClient, { ProductDetailClientProps } from '@/core/components/ProductDetailClient'
+import prisma from '@/core/lib/prisma'
 
 type ProdutoPageProps = {
   params: Promise<{ slug: string }>

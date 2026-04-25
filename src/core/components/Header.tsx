@@ -4,7 +4,7 @@ import { useState } from 'react'
 import Link from "next/link"
 import Image from "next/image"
 import { Menu, X, ShoppingCart } from 'lucide-react'
-import { useCart } from '@/context/CartContext'
+import { useCart } from '@/core/context/CartContext'
 
 export default function Header() {
   const [open, setOpen] = useState(false)

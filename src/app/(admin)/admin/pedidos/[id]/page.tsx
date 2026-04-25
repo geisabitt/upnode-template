@@ -1,5 +1,5 @@
 // src/app/(admin)/admin/pedidos/[id]/page.tsx
-import { prisma } from '@/lib/prisma'
+import { prisma } from '@/core/lib/prisma'
 import { notFound } from 'next/navigation'
 
 export default async function OrderDetailsPage({ params }: { params: Promise<{ id: string }> }) {
