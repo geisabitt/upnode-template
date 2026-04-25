@@ -5,7 +5,7 @@
  * Encapsula formatação de valores e status
  */
 
-import { OrderFromAPI } from '@/types/order'
+import { OrderFromAPI } from '@/core/types/order'
 
 interface OrderCardProps {
   pedido: OrderFromAPI

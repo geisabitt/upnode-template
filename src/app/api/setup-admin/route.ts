@@ -1,7 +1,7 @@
 // src/app/api/setup-admin/route.ts
 import { NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
-import { hashPassword } from '@/lib/auth'
+import { prisma } from '@/core/lib/prisma'
+import { hashPassword } from '@/core/lib/auth'
 
 const SETUP_ADMIN_KEY = process.env.SETUP_ADMIN_KEY
 

@@ -3,8 +3,8 @@
 import { useForm } from 'react-hook-form'
 import * as yup from 'yup'
 import { yupResolver } from '@hookform/resolvers/yup'
-import { OrderCard } from '@/components/OrderCard'
-import { useBuscaPedidos } from '@/lib/hooks/useBuscaPedidos'
+import { OrderCard } from '@/core/components/OrderCard'
+import { useBuscaPedidos } from '@/core/lib/hooks/useBuscaPedidos'
 
 type FormInputs = {
   email: string

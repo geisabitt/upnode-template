@@ -6,7 +6,7 @@
  */
 
 import { useState } from 'react'
-import { OrderFromAPI, OrderTypeUtils } from '@/types/order'
+import { OrderFromAPI, OrderTypeUtils } from '@/core/types/order'
 
 export function useBuscaPedidos() {
   const [pedidos, setPedidos] = useState<OrderFromAPI[]>([])

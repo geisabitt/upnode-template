@@ -12,7 +12,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { asaasFetch, AsaasPixQrCode } from '@/lib/asaas';
+import { asaasFetch, AsaasPixQrCode } from '@/core/lib/asaas';
 
 export const runtime = 'nodejs';
 

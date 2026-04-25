@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
-import { clearAuthCookie, verifyAuthToken } from '@/lib/session'
-import { logAccess } from '@/lib/logger'
+import { clearAuthCookie, verifyAuthToken } from '@/core/lib/session'
+import { logAccess } from '@/core/lib/logger'
 
 export async function POST(request: Request) {
   // Tentar extrair userId do token para log

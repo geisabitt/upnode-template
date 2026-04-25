@@ -4,9 +4,9 @@ import { useParams } from 'next/navigation'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { toast } from 'react-hot-toast'
-import PaymentMethodSelector from '@/components/payment/PaymentMethodSelector'
-import CreditCardForm from '@/components/payment/CreditCardForm'
-import PixPayment from '@/components/payment/PixPayment'
+import PaymentMethodSelector from '@/core/components/payment/PaymentMethodSelector'
+import CreditCardForm from '@/core/components/payment/CreditCardForm'
+import PixPayment from '@/core/components/payment/PixPayment'
 import { Loader2 } from 'lucide-react'
 
 interface Order {

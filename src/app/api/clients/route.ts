@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
-import prisma from '@/lib/prisma'
-import { createAsaasAccount } from '@/lib/asaas'
+import prisma from '@/core/lib/prisma'
+import { createAsaasAccount } from '@/core/lib/asaas'
 
 type CreateClientBody = {
   name: string

@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { prisma } from '@/lib/prisma'
+import { prisma } from '@/core/lib/prisma'
 import Image from 'next/image'
 
 export const dynamic = 'force-dynamic'
@@ -9,9 +9,7 @@ async function getProducts() {
     include: {
       colors: true,
       sizes: true,
-      images: {
-        orderBy: { createdAt: 'desc' },
-      },
+      images: { orderBy: { createdAt: 'desc' } },
     },
     orderBy: { createdAt: 'desc' },
   })
@@ -22,39 +20,42 @@ export default async function LojaPage() {
 
   return (
     <main>
-      <section className="p-4 grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-6 md:gap-10">
+      <section className="px-4 py-6 md:px-20 md:py-20 grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
         {products.map((product) => {
-          const image = product.images?.[0]?.url || '/logo-artesanaio.jpeg'
+          const image = product.images?.[0]?.url || '/placeholder.png'
 
           return (
             <Link
-  key={product.id}
-  href={`/loja/produto/${product.slug}`}
-  className="bg-white shadow-md rounded-xl overflow-hidden hover:scale-105 transition flex flex-col"
->
-  <div className="w-full aspect-square relative">
-    <Image
-      src={image}
-      alt={product.name}
-      fill
-      className="object-cover"
-    />
-  </div>
+              key={product.id}
+              href={`/loja/produto/${product.slug}`}
+              className="bg-white shadow-lg rounded-xl overflow-hidden hover:scale-105 transition flex flex-col"
+            >
+              {/* IMAGEM — aspect-square no mobile, altura fixa no desktop */}
+              <div className="w-full aspect-square md:aspect-auto md:h-72 relative">
+                <Image
+                  src={image}
+                  alt={product.name}
+                  fill
+                  className="object-cover"
+                />
+              </div>
 
-  <div className="p-2 flex flex-col flex-1">
-    <h2 className="text-sm font-semibold line-clamp-2 text-[var(--color-accent)]">
-      {product.name}
-    </h2>
+              {/* INFOS */}
+              <div className="p-2 md:p-4 flex flex-col flex-1">
+                <h2 className="text-sm md:text-xl font-semibold line-clamp-2"
+                  style={{ color: 'var(--color-accent)' }}>
+                  {product.name}
+                </h2>
 
-    <p className="text-green-700 font-bold text-sm mt-1">
-      R$ {Number(product.price).toFixed(2)}
-    </p>
+                <p className="text-green-700 font-bold text-sm md:text-lg mt-1">
+                  R$ {Number(product.price).toFixed(2)}
+                </p>
 
-    <button className="bg-green-600 w-full mt-auto py-1 rounded-lg text-xs font-bold text-white">
-      VER DETALHES
-    </button>
-  </div>
-</Link>
+                <button className="bg-green-600 w-full mt-auto py-1 md:py-2 rounded-lg text-xs md:text-sm font-bold text-white md:mt-3">
+                  VER DETALHES
+                </button>
+              </div>
+            </Link>
           )
         })}
       </section>

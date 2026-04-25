@@ -1,5 +1,5 @@
 import jwt from 'jsonwebtoken'
-import { AdminUserPayload } from '@/lib/auth'
+import { AdminUserPayload } from '@/core/lib/auth'
 
 const JWT_SECRET = process.env.AUTH_JWT_SECRET!
 

@@ -4,7 +4,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { asaasFetch, maskApiKey, getAsaasConfig } from '@/lib/asaas';
+import { asaasFetch, maskApiKey, getAsaasConfig } from '@/core/lib/asaas';
 
 export const runtime = 'nodejs';
 

@@ -1,6 +1,6 @@
-import { prisma } from "@/lib/prisma"
+import { prisma } from "@/core/lib/prisma"
 import { notFound } from "next/navigation"
-import PageForm from "@/components/admin/PageForm"
+import PageForm from "@/core/components/admin/PageForm"
 
 type PageProps = {
   params: Promise<{

@@ -1,9 +1,9 @@
 'use client'
 
 import { useState, useCallback } from 'react'
-import { PDFProcessor } from '@/lib/pdf/pdfProcessor'
-import { ShopeeParser } from '@/lib/pdf/pdfParser'
-import { PrintGenerator } from '@/lib/print/printGenerator'
+import { PDFProcessor } from '@/core/lib/pdf/pdfProcessor'
+import { ShopeeParser } from '@/core/lib/pdf/pdfParser'
+import { PrintGenerator } from '@/core/lib/print/printGenerator'
 
 export default function AdminLabelsPage() {
   const [labelParts, setLabelParts] = useState<string[]>([])

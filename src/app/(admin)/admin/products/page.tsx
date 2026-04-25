@@ -2,8 +2,8 @@
 
 import Link from 'next/link'
 import Image from 'next/image'
-import { prisma } from '@/lib/prisma'
-import DeleteProductButton from '@/components/admin/DeleteProductButton'
+import { prisma } from '@/core/lib/prisma'
+import DeleteProductButton from '@/core/components/admin/DeleteProductButton'
 
 type ProductsPageProps = {
   searchParams: Promise<{ page?: string }>

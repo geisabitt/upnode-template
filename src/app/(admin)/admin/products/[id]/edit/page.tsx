@@ -1,5 +1,5 @@
-import { prisma } from '@/lib/prisma'
-import ProductForm from '@/components/admin/ProductForm'
+import { prisma } from '@/core/lib/prisma'
+import ProductForm from '@/core/components/admin/ProductForm'
 
 type EditProductPageProps = {
   params: Promise<{

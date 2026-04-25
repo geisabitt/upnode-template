@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useCart } from '@/context/CartContext'
+import { useCart } from '@/core/context/CartContext'
 import { toast } from 'react-hot-toast'
 
 export type ProductDetailClientProps = {

@@ -1,42 +1,5 @@
+/* src/app/globals.css */
 @import "tailwindcss";
-
-/* =====================================================
-   ROOT (TOKENS)
-   ===================================================== */
-
-:root {
-  /* BACKGROUND */
-  --color-bg-primary: #000000;
-  --color-bg-secondary: #0B0B0B;
-  --color-bg-tertiary: #111111;
-  --color-bg-card: #1a1a1a;
-  --color-bg-hover: #222222;
-
-  /* TEXT */
-  --color-text-primary: #EADCC6;
-  --color-text-secondary: #D6C7A8;
-  --color-text-tertiary: #B8A98A;
-  --color-text-muted: #CFC2A8;
-  --color-text-light: #ffffff;
-
-  /* ACCENT */
-  --color-accent: #C8A96A;
-  --color-accent-hover: #B89A5A;
-
-  /* STATUS */
-  --color-error: #dc2626;
-  --color-success: #16a34a;
-  --color-info: #C8A96A;
-
-  /* BORDER */
-  --color-border: #333333;
-  --color-border-light: #444444;
-
-  /* ADMIN */
-  --color-admin-bg: #1a1a1a;
-  --color-admin-text: #EADCC6;
-  --color-admin-border: #333333;
-}
 
 /* =====================================================
    TAILWIND THEME

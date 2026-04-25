@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { useCart } from '@/context/CartContext'
+import { useCart } from '@/core/context/CartContext'
 
 interface Order {
   id: string

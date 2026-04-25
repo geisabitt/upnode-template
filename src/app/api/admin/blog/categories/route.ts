@@ -1,6 +1,6 @@
 // src/app/api/admin/blog-categories/route.ts
 import { NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
+import { prisma } from '@/core/lib/prisma'
 
 export async function GET() {
   const categories = await prisma.blogCategory.findMany({
