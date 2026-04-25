@@ -1,82 +1,87 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
 import "@/app/globals.css";
 import Header from "@/core/components/Header";
 import { CartProvider } from '@/core/context/CartContext';
 import { Toaster } from "react-hot-toast";
 import Footer from "@/core/components/Footer";
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+import { siteConfig } from "@/client/config/site.config";
 
 export const metadata: Metadata = {
-  title: "Geicy Crochê | Crochê com Estilo e Elegância",
-  description:
-    "Peças em crochê feitas à mão com qualidade e sofisticação. Roupas, acessórios e itens para casa sob encomenda. Atendimento para todo o Brasil.",
-  authors: [
-    {
-      name: "Geicy Crochê",
-    },
-  ],
-  keywords: [
-    "crochê artesanal",
-    "crochê sob encomenda",
-    "roupas de crochê",
-    "acessórios de crochê",
-    "jogo de banheiro crochê",
-    "crochê para casa",
-    "artesanato em crochê",
-    "crochê personalizado",
-    "crochê Brasil",
-  ],
+  metadataBase: new URL(siteConfig.seo.url),
+  title: siteConfig.seo.titulo,               
+  description: siteConfig.seo.descricao,       
+  authors: [{ name: siteConfig.nome }],        
+  keywords: siteConfig.seo.keywords,           
   openGraph: {
-    title: "Geicy Crochê | Crochê com Estilo e Elegância",
-    description:
-      "Peças exclusivas feitas à mão. Crochê artesanal com elegância e qualidade para todo o Brasil.",
-    url: "https://seudominio.com",
-    siteName: "Geicy Crochê",
+    title: siteConfig.seo.titulo,
+    description: siteConfig.seo.descricao,
+    url: siteConfig.seo.url,                   
+    siteName: siteConfig.nome,
     locale: "pt_BR",
     type: "website",
-    images: [
-      {
-        url: "/bg-gc-croche-com-elegancia-e-estilo.png",
-        width: 1200,
-        height: 630,
-        alt: "Crochê artesanal elegante Geicy Crochê",
-      },
-    ],
+    images: [{
+      url: siteConfig.seo.ogImage,            
+      width: 1200,
+      height: 630,
+      alt: siteConfig.seo.titulo,
+    }],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Geicy Crochê",
-    description:
-      "Crochê artesanal com estilo e elegância. Peças sob encomenda.",
-    images: ["/bg-gc-croche-com-elegancia-e-estilo.png"],
+    title: siteConfig.nome,
+    description: siteConfig.seo.descricao,
+    images: [siteConfig.seo.ogImage],
   },
 };
-
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
 };
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+function buildCssVariables(t: typeof siteConfig.theme): string {
+  return `
+    :root {
+      --color-bg-primary:      ${t.bgPrimary};
+      --color-bg-secondary:    ${t.bgSecondary};
+      --color-bg-tertiary:     ${t.bgTertiary};
+      --color-bg-card:         ${t.bgCard};
+      --color-bg-hover:        ${t.bgHover};
+      --color-overlay:         ${t.overlay};
+
+      --color-text-primary:    ${t.textPrimary};
+      --color-text-secondary:  ${t.textSecondary};
+      --color-text-tertiary:   ${t.textTertiary};
+      --color-text-muted:      ${t.textMuted};
+      --color-text-light:      ${t.textLight};
+      --color-text-hero-muted: ${t.textHeroMuted};
+
+      --color-accent:          ${t.accent};
+      --color-accent-hover:    ${t.accentHover};
+      --color-accent-light:    ${t.accentLight};
+
+      --color-error:           ${t.error};
+      --color-success:         ${t.success};
+      --color-info:            ${t.info};
+
+      --color-border:          ${t.border};
+      --color-border-light:    ${t.borderLight};
+
+      --color-admin-bg:        ${t.adminBg};
+      --color-admin-text:      ${t.adminText};
+      --color-admin-border:    ${t.adminBorder};
+    }
+  `
+}
+
+export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="pt-br">
+      <head>
+        <style dangerouslySetInnerHTML={{ __html: buildCssVariables(siteConfig.theme) }} />
+      </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-[#0B0B0B] text-[#EADCC6] overflow-x-hidden`}
+        className={`antialiased bg-[#0B0B0B] text-[#EADCC6] overflow-x-hidden`}
       >
         <Toaster position="top-right" reverseOrder={false} />
 

@@ -3,117 +3,122 @@
 import Link from "next/link"
 import Image from "next/image"
 import { Settings } from "lucide-react"
+import { siteConfig } from '@/client/config/site.config'
 
 export default function Footer() {
+  const whatsappHref = `https://wa.me/${siteConfig.whatsapp}`
+
   return (
     <footer className="w-full">
 
       {/* BENEFÍCIOS */}
-      <div className="flex flex-col sm:flex-row justify-center gap-8 sm:gap-16 py-16 bg-[var(--color-bg-tertiary)] text-center px-4 border-t border-[var(--color-bg-card)]">
-
-        <div>
-          <h4 className="font-semibold text-lg text-[var(--color-text-primary)]">Feito à Mão</h4>
-          <p className="text-sm text-[var(--color-text-tertiary)]">Cada peça com cuidado artesanal</p>
-        </div>
-
-        <div>
-          <h4 className="font-semibold text-lg text-[var(--color-text-primary)]">Peças Exclusivas</h4>
-          <p className="text-sm text-[var(--color-text-tertiary)]">Produção sob encomenda</p>
-        </div>
-
-        <div>
-          <h4 className="font-semibold text-lg text-[var(--color-text-primary)]">Entrega no Brasil</h4>
-          <p className="text-sm text-[var(--color-text-tertiary)]">Envios para todo o país</p>
-        </div>
-
+      <div
+        className="flex flex-col sm:flex-row justify-center gap-8 sm:gap-16 py-16 text-center px-4"
+        style={{
+          backgroundColor: 'var(--color-bg-tertiary)',
+          borderTop: '1px solid var(--color-bg-card)',
+        }}
+      >
+        {siteConfig.benefits.map((benefit, index) => (
+          <div key={index}>
+            <h4
+              className="font-semibold text-lg"
+              style={{ color: 'var(--color-text-primary)' }}
+            >
+              {benefit.title}
+            </h4>
+            <p className="text-sm" style={{ color: 'var(--color-text-tertiary)' }}>
+              {benefit.description}
+            </p>
+          </div>
+        ))}
       </div>
 
       {/* FOOTER PRINCIPAL */}
-      <div className="w-full bg-[var(--color-bg-secondary)] text-[var(--color-text-primary)] py-16">
-
+      <div
+        className="w-full py-16"
+        style={{
+          backgroundColor: 'var(--color-bg-secondary)',
+          color: 'var(--color-text-primary)',
+        }}
+      >
         <div className="max-w-6xl mx-auto px-6 grid md:grid-cols-3 gap-10">
 
-          {/* LOGO */}
           <div>
             <Image
-              src="/logo-geicy-croche.png"
-              alt="Geicy Crochê peças artesanais em crochê"
+              src={siteConfig.logoVertical}
+              alt={siteConfig.logoAlt}
               width={160}
               height={80}
               className="mb-4"
             />
-
-            <p className="text-sm text-[var(--color-text-tertiary)] leading-relaxed">
-              Crochê artesanal com estilo e elegância. Peças feitas à mão sob encomenda,
-              incluindo roupas, acessórios e itens para casa.
+            <p className="text-sm leading-relaxed" style={{ color: 'var(--color-text-tertiary)' }}>
+              {siteConfig.footerDescription}
             </p>
           </div>
 
-          {/* LINKS */}
           <div>
             <h4 className="font-semibold mb-4 text-lg">Navegação</h4>
-
-            <ul className="space-y-2 text-sm text-[var(--color-text-tertiary)]">
-
-              <li>
-                <Link href="/" className="hover:text-[var(--color-accent)] transition">
-                  Início
-                </Link>
-              </li>
-
-              <li>
-                <Link href="/pecas" className="hover:text-[var(--color-accent)] transition">
-                  Peças em Crochê
-                </Link>
-              </li>
-
-              <li>
-                <Link href="/sobre" className="hover:text-[var(--color-accent)] transition">
-                  Sobre
-                </Link>
-              </li>
-
-              <li>
-                <Link href="/contato" className="hover:text-[var(--color-accent)] transition">
-                  Contato
-                </Link>
-              </li>
-
+            <ul className="space-y-2 text-sm" style={{ color: 'var(--color-text-tertiary)' }}>
+              {siteConfig.footerNavLinks.map((link) => (
+                <li key={link.href}>
+                  <Link
+                    href={link.href}
+                    className="transition hover:opacity-80"
+                    style={{ color: 'var(--color-text-tertiary)' }}
+                    onMouseEnter={e => (e.currentTarget.style.color = 'var(--color-accent)')}
+                    onMouseLeave={e => (e.currentTarget.style.color = 'var(--color-text-tertiary)')}
+                  >
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
             </ul>
           </div>
 
-          {/* CONTATO */}
           <div>
             <h4 className="font-semibold mb-4 text-lg">Contato</h4>
-
-            <p className="text-sm text-[var(--color-text-tertiary)] mb-2">WhatsApp</p>
-
-            <Link
-              href="https://wa.me/5521986483118"
-              className="text-[var(--color-accent)] font-semibold hover:opacity-80 transition"
-            >
-              (21) 98648-3118
-            </Link>
-
-            <p className="mt-4 text-sm text-[var(--color-text-tertiary)]">
-              Atendimento para todo o Brasil
+            <p className="text-sm mb-2" style={{ color: 'var(--color-text-tertiary)' }}>
+              WhatsApp
             </p>
-
+            <Link
+              href={whatsappHref}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-semibold transition hover:opacity-80"
+              style={{ color: 'var(--color-accent)' }}
+            >
+              {siteConfig.whatsappDisplay}
+            </Link>
+            <p className="mt-4 text-sm" style={{ color: 'var(--color-text-tertiary)' }}>
+              {siteConfig.cidade}
+            </p>
           </div>
 
         </div>
-
       </div>
 
-{/* COPYRIGHT */}
-      <div className="flex items-center justify-center gap-2 py-6 text-xs bg-black text-[#B8A98A] border-t border-[#1a1a1a]">
-        <Link href="/admin/login" className="opacity-60 hover:opacity-100 transition">
+      {/* COPYRIGHT */}
+      <div
+        className="flex items-center justify-center gap-2 py-6 text-xs"
+        style={{
+          backgroundColor: 'var(--color-bg-primary)',
+          color: 'var(--color-text-tertiary)',
+          borderTop: '1px solid var(--color-border)',
+        }}
+      >
+        <Link
+          href="/admin/login"
+          className="opacity-60 hover:opacity-100 transition"
+          aria-label="Admin"
+          style={{ color: 'var(--color-text-tertiary)' }}
+        >
           <Settings className="w-3 h-3" />
         </Link>
         <span>
-          © {new Date().getFullYear()} Geicy Crochê — Crochê com Estilo e Elegância
+          © {new Date().getFullYear()} {siteConfig.nome}
+          {siteConfig.copyrightTagline ? ` — ${siteConfig.copyrightTagline}` : ""}
         </span>
-
       </div>
 
     </footer>
