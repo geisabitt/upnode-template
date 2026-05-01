@@ -117,11 +117,8 @@ export default async function AdminPage() {
             Quantidade por status
           </p>
           <div className="mt-2 flex flex-wrap gap-2">
-            {Object.entries(statusCounts).map(([status, amount]) => (
-              <span
-                key={status}
-                className="rounded-full bg-[var(--color-info)]/20 px-3 py-1 text-xs font-semibold text-[var(--color-info)]"
-              >
+            {Object.entries(statusCounts as Record<string, number>).map(([status, amount]) => (
+              <span key={status}>
                 {status}: {amount}
               </span>
             ))}

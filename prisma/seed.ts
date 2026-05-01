@@ -1,6 +1,6 @@
 // prisma/seed.ts
 import 'dotenv/config'
-import { PrismaClient } from '@prisma/client'
+import { PrismaClient } from '../src/generated/client'
 import { PrismaPg } from '@prisma/adapter-pg'
 import { Pool } from 'pg'
 import bcrypt from 'bcryptjs'
