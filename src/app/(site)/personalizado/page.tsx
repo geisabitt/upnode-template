@@ -32,8 +32,8 @@ export default async function PersonalizadosPage() {
       <div className="space-y-4">
         {faqs.map((item: any, i: number) => (
           <div key={i} className="border border-[var(--color-border)] rounded-2xl p-4 bg-[var(--color-bg-card)]">
-            <h2 className="font-semibold">{item.question}</h2>
-            <p className="text-[var(--color-text-secondary)] mt-2">{item.answer}</p>
+            <h2 className="font-semibold">{item.pergunta}</h2>
+            <p className="text-[var(--color-text-secondary)] mt-2">{item.resposta}</p>
           </div>
         ))}
       </div>

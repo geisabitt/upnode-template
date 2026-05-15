@@ -17,6 +17,11 @@
    BASE
    ===================================================== */
 
+html,
+body {
+  min-height: 100%;
+}
+
 body {
   background: var(--color-bg-primary);
   color: var(--color-text-primary);
@@ -62,7 +67,10 @@ body {
    ===================================================== */
 
 .input {
-  @apply w-full rounded-2xl border border-[var(--color-admin-border)] bg-[var(--color-bg-tertiary)] px-4 py-3 text-sm outline-none;
+  @apply w-full rounded-2xl border px-4 py-3 text-sm outline-none;
+  border-color: var(--color-admin-border);
+  background: var(--color-bg-tertiary);
+  color: var(--color-text-primary);
 }
 
 .input:focus {
@@ -71,11 +79,13 @@ body {
 }
 
 .card {
-  @apply rounded-3xl border border-[var(--color-admin-border)] bg-[var(--color-admin-bg)] p-6;
+  @apply rounded-3xl border p-6;
+  border-color: var(--color-admin-border);
+  background: var(--color-admin-bg);
 }
 
 .title {
-  @apply text-lg font-semibold mb-4;
+  @apply mb-4 text-lg font-semibold;
 }
 
 /* =====================================================
@@ -93,12 +103,13 @@ body {
 }
 
 .btn-success {
-  @apply rounded-3xl px-5 py-3 text-sm font-semibold transition text-white;
+  @apply rounded-3xl px-5 py-3 text-sm font-semibold transition;
   background: var(--color-success);
+  color: var(--color-text-light);
 }
 
 .btn-success:hover {
-  background: #15803d;
+  background: color-mix(in srgb, var(--color-success) 88%, black);
 }
 
 .btn-secondary {
@@ -113,9 +124,9 @@ body {
 }
 
 .btn-accent {
-  @apply inline-block px-8 py-4 rounded transition;
+  @apply inline-block rounded px-8 py-4 transition;
   background: var(--color-accent);
-  color: var(--color-bg-primary);
+  color: var(--color-text-light);
 }
 
 .btn-accent:hover {
@@ -123,14 +134,84 @@ body {
 }
 
 .btn-outline-accent {
-  @apply inline-block px-6 py-3 rounded transition border;
+  @apply inline-block rounded border px-6 py-3 transition;
   border-color: var(--color-accent);
   color: var(--color-accent);
 }
 
 .btn-outline-accent:hover {
   background: var(--color-accent);
-  color: var(--color-bg-primary);
+  color: var(--color-text-light);
+}
+
+/* =====================================================
+   BOTÕES BRAND
+   ===================================================== */
+
+.btn-brand {
+  @apply inline-block rounded-3xl px-5 py-3 text-sm font-semibold transition;
+  background: var(--color-brand-primary);
+  color: var(--color-text-light);
+}
+
+.btn-brand:hover {
+  background: var(--color-brand-primary-hover);
+}
+
+.btn-outline-brand {
+  @apply inline-block rounded-3xl border px-5 py-3 text-sm font-semibold transition;
+  border-color: var(--color-brand-primary);
+  color: var(--color-brand-primary);
+  background: transparent;
+}
+
+.btn-outline-brand:hover {
+  background: var(--color-brand-primary);
+  color: var(--color-text-light);
+}
+
+.btn-brand-secondary {
+  @apply inline-block rounded-3xl px-5 py-3 text-sm font-semibold transition;
+  background: var(--color-brand-secondary);
+  color: var(--color-text-light);
+}
+
+.btn-brand-secondary:hover {
+  background: var(--color-brand-secondary-hover);
+}
+
+/* =====================================================
+   SUPERFÍCIES BRAND
+   ===================================================== */
+
+.surface-brand {
+  background: var(--color-brand-surface);
+  color: var(--color-text-light);
+}
+
+.surface-brand-soft {
+  background: var(--color-brand-surface-soft);
+  color: var(--color-text-light);
+}
+
+.border-brand {
+  border-color: var(--color-brand-border);
+}
+
+.text-brand {
+  color: var(--color-brand-primary);
+}
+
+.text-brand-secondary {
+  color: var(--color-brand-secondary);
+}
+
+.bg-brand-primary {
+  background: var(--color-brand-primary);
+}
+
+.bg-brand-secondary {
+  background: var(--color-brand-secondary);
 }
 
 /* =====================================================
@@ -138,7 +219,7 @@ body {
    ===================================================== */
 
 .card-category {
-  @apply block p-6 rounded-xl border transition;
+  @apply block rounded-xl border p-6 transition;
   background: var(--color-bg-tertiary);
   border-color: var(--color-bg-hover);
 }
@@ -148,7 +229,7 @@ body {
 }
 
 .card-blog {
-  @apply block rounded-lg overflow-hidden transition-shadow;
+  @apply block overflow-hidden rounded-lg transition-shadow;
   background: var(--color-bg-tertiary);
   border: 1px solid var(--color-admin-border);
 }
@@ -158,7 +239,7 @@ body {
 }
 
 .card-post {
-  @apply rounded-3xl border overflow-hidden transition;
+  @apply overflow-hidden rounded-3xl border transition;
   background: var(--color-bg-card);
   border-color: var(--color-border);
 }
@@ -192,6 +273,6 @@ body {
 .alert-error {
   @apply rounded-3xl p-8;
   border: 1px solid var(--color-error);
-  background: rgba(220, 38, 38, 0.2);
+  background: color-mix(in srgb, var(--color-error) 18%, transparent);
   color: var(--color-error);
 }
