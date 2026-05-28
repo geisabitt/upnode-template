@@ -13,7 +13,7 @@ async function getProducts() {
     },
     orderBy: { createdAt: 'desc' },
   })
-}
+} 
 
 export default async function LojaPage() {
   const products = await getProducts()
