@@ -1,12 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { asaasFetch, AsaasPayment } from '@/core/lib/asaas';
-import { prisma } from '@/core/lib/prisma';
 import * as yup from 'yup';
 
 export const runtime = 'nodejs';
 
-// Comissão fixa da Upnode por venda (em R$)
-const UPNODE_COMMISSION = 0.50;
+const creditCardSchema = yup.object({
+  creditCardNumber: yup.string().matches(/^\d{16}$/).required(),
+  creditCardExpirationMonth: yup.string().matches(/^(0[1-9]|1[0-2])$/).required(),
+  creditCardExpirationYear: yup.string().matches(/^\d{4}$/).required(),
+  creditCardCvv: yup.string().matches(/^\d{3,4}$/).required(),
+  creditCardHolderName: yup.string().required(),
+});
 
 const createPaymentSchema = yup.object({
   customerId: yup.string().required(),
@@ -61,29 +65,15 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    if (validatedData.billingType === 'CREDIT_CARD' && !validatedData.creditCardData) {
-      return NextResponse.json(
-        { error: 'creditCardData é obrigatório para cartão' },
-        { status: 400 }
-      );
+    // 🔥 validação manual (mais confiável que when)
+    if (validatedData.billingType === 'CREDIT_CARD') {
+      if (!validatedData.creditCardData) {
+        return NextResponse.json(
+          { error: 'creditCardData é obrigatório para cartão' },
+          { status: 400 }
+        );
+      }
     }
-
-    // 📦 Busca o pedido para pegar dados reais do comprador
-    const order = await prisma.order.findUnique({
-      where: { id: validatedData.orderId },
-    });
-
-    if (!order) {
-      return NextResponse.json(
-        { error: 'Pedido não encontrado' },
-        { status: 404 }
-      );
-    }
-
-    // 👤 Busca o cliente cadastrado pelo email do pedido para pegar walletId
-    const client = await prisma.client.findUnique({
-      where: { email: order.email },
-    });
 
     const remoteIp =
       req.headers.get('x-forwarded-for') ||
@@ -104,34 +94,8 @@ export async function POST(req: NextRequest) {
       remoteIp,
     };
 
-    // 💰 Splits: repassa para carteira do cliente e retira comissão da Upnode
-    const upnodeWalletId = process.env.UPNODE_WALLET_ID;
-    if (client?.asaasWalletId && upnodeWalletId) {
-      payload.splits = [
-        {
-          // Cliente recebe o total menos a comissão da Upnode
-          walletId: client.asaasWalletId,
-          fixedValue: Number((validatedData.total - UPNODE_COMMISSION).toFixed(2)),
-        },
-        {
-          // Upnode recebe R$0,50 fixo por venda
-          walletId: upnodeWalletId,
-          fixedValue: UPNODE_COMMISSION,
-        },
-      ];
-      console.log(`[Asaas] Split configurado: cliente ${client.asaasWalletId} recebe R$${payload.splits[0].fixedValue}`);
-    } else {
-      console.warn('[Asaas] ⚠️ Split não configurado:', {
-        clienteEncontrado: !!client,
-        clienteTemWallet: !!client?.asaasWalletId,
-        upnodeWalletConfigurado: !!upnodeWalletId,
-      });
-    }
-
-    // 💳 CARTÃO — com dados reais do pedido
+    // 💳 CARTÃO
     if (validatedData.billingType === 'CREDIT_CARD' && validatedData.creditCardData) {
-      const address = order.address as any;
-
       payload.creditCard = {
         holderName: validatedData.creditCardData.creditCardHolderName,
         number: validatedData.creditCardData.creditCardNumber,
@@ -140,13 +104,14 @@ export async function POST(req: NextRequest) {
         ccv: validatedData.creditCardData.creditCardCvv,
       };
 
+      // ⚠️ ESSENCIAL pro Asaas
       payload.creditCardHolderInfo = {
-        name: order.fullName,
-        email: order.email,
-        cpfCnpj: order.cpf,
-        postalCode: address?.cep?.replace(/\D/g, '') || '',
-        addressNumber: address?.numero || 'S/N',
-        phone: order.phone,
+        name: validatedData.creditCardData.creditCardHolderName,
+        email: 'cliente@email.com',
+        cpfCnpj: '12345678909',
+        postalCode: '00000000',
+        addressNumber: '1',
+        phone: '11999999999',
       };
     }
 
@@ -156,7 +121,6 @@ export async function POST(req: NextRequest) {
       orderId: validatedData.orderId,
       customerId: validatedData.customerId,
       dueDate: payload.dueDate,
-      hasSplits: !!payload.splits,
     });
 
     const payment = await asaasFetch<AsaasPayment>(
@@ -166,14 +130,6 @@ export async function POST(req: NextRequest) {
     );
 
     console.log('[Asaas Create Payment] Success:', payment.id);
-
-    // 🔗 Vincula o pedido ao client cadastrado se encontrado
-    if (client) {
-      await prisma.order.update({
-        where: { id: validatedData.orderId },
-        data: { clientId: client.id },
-      });
-    }
 
     return NextResponse.json({
       success: true,
@@ -192,9 +148,18 @@ export async function POST(req: NextRequest) {
   }
 }
 
+/**
+ * 📅 regras de data
+ */
 function getDefaultDueDate(billingType: string): string {
   const date = new Date();
-  date.setDate(date.getDate() + (billingType === 'CREDIT_CARD' ? 1 : 30));
+
+  if (billingType === 'CREDIT_CARD') {
+    date.setDate(date.getDate() + 1);
+  } else {
+    date.setDate(date.getDate() + 30);
+  }
+
   return formatDate(date);
 }
 

@@ -77,11 +77,6 @@ model Order {
   total            Decimal  @db.Decimal(10, 2)
   statusPagamento  String?
   customerId       String?  // Asaas Customer ID
-
-  // 🔗 Relação com o cliente cadastrado no painel
-  clientId         String?
-  client           Client?  @relation(fields: [clientId], references: [id])
-
   createdAt        DateTime @default(now())
 
   items            OrderItem[]
@@ -121,9 +116,6 @@ model Client {
   asaasAccountId String?
   asaasWalletId  String?
   createdAt      DateTime @default(now())
-
-  // 🔗 Pedidos vinculados a este cliente
-  orders         Order[]
 }
 
 model AccessLog {
@@ -147,14 +139,14 @@ model BlogCategory {
   description String?
   image       String?
 
-  showOnHome  Boolean  @default(false)
-  featured    Boolean  @default(false)
-  order       Int?
+  showOnHome  Boolean  @default(false) // aparece na home
+  featured    Boolean  @default(false) // destaque (ex: topo)
+  order       Int?     // ordenação manual
 
   posts       Post[]
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt   DateTime @default(now())   // ✅ ADD
+  updatedAt   DateTime @updatedAt        // ✅ ADD
 }
 
 model Post {
@@ -189,13 +181,15 @@ model PostSEO {
 model CustomPage {
   id        String @id @default(cuid())
 
-  slug      String
+  slug      String   // "sobre" | "personalizados"
   title     String
 
+  // SOBRE
   introText String?
   section1Title String?
   section1Text  String?
 
+  // FAQ PERSONALIZADOS
   faq       Json?
 
   coverImage String?
