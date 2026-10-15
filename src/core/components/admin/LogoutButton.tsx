@@ -21,7 +21,7 @@ export function LogoutButton() {
       } else {
         alert('Erro ao fazer logout. Tente novamente.')
       }
-    } catch (error) {
+    } catch {
       alert('Erro de conexão. Tente novamente.')
     } finally {
       setLoading(false)

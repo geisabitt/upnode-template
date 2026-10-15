@@ -11,28 +11,6 @@ export default function AdminLabelsPage() {
   const [loading, setLoading] = useState(false)
 
 
-  const handleFileChange = useCallback(
-    async (e: React.ChangeEvent<HTMLInputElement>) => {
-      const file = e.target.files?.[0]
-      if (!file) return
-
-      await processLabelFile(file)
-    },
-    []
-  )
-
-  const processLabelFile = useCallback(async (file: File) => {
-    setLoading(true)
-
-    const { fullText, labelImage } = await PDFProcessor.processPDF(file)
-    const parsed = ShopeeParser.parse(fullText)
-
-    await generateLabelImages(labelImage)
-    setPrintText(PrintGenerator.generate(parsed))
-
-    setLoading(false)
-  }, [])
-
   const generateLabelImages = useCallback(async (imageDataUrl: string) => {
     const img = new Image()
     img.onload = () => {
@@ -67,6 +45,29 @@ export default function AdminLabelsPage() {
 
     img.src = imageDataUrl
   }, [])
+
+
+  const processLabelFile = useCallback(async (file: File) => {
+    setLoading(true)
+
+    const { fullText, labelImage } = await PDFProcessor.processPDF(file)
+    const parsed = ShopeeParser.parse(fullText)
+
+    await generateLabelImages(labelImage)
+    setPrintText(PrintGenerator.generate(parsed))
+
+    setLoading(false)
+  }, [generateLabelImages])
+
+  const handleFileChange = useCallback(
+    async (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0]
+      if (!file) return
+
+      await processLabelFile(file)
+    },
+    [processLabelFile]
+  )
 
 
   const handlePrint = useCallback(() => {

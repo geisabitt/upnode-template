@@ -1,7 +1,7 @@
 // src/app/(admin)/admin/pedidos/page.tsx
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 
 type Order = {
@@ -12,22 +12,18 @@ type Order = {
   createdAt: string
 }
 
-const statusOptions = ['ALL', 'PENDENTE', 'PAGO', 'ENVIADO', 'CANCELADO']
 
 export default function AdminOrdersPage() {
   const [orders, setOrders] = useState<Order[]>([])
-  const [status, setStatus] = useState('ALL')
-  const [search, setSearch] = useState('')
-  const [page, setPage] = useState(1)
+  const [status] = useState('ALL')
+  const [search] = useState('')
+  const [page] = useState(1)
   const [perPage] = useState(10)
-  const [total, setTotal] = useState(0)
-  const [loading, setLoading] = useState(false)
 
   useEffect(() => {
     const controller = new AbortController()
 
     async function load() {
-      setLoading(true)
       const params = new URLSearchParams({
         status,
         search,
@@ -40,16 +36,13 @@ export default function AdminOrdersPage() {
       })
       const json = await res.json()
       setOrders(json.orders)
-      setTotal(json.total)
-      setLoading(false)
     }
 
-    load().catch(() => setLoading(false))
+    load().catch(() => {})
 
     return () => controller.abort()
   }, [status, search, page, perPage])
 
-  const totalPages = useMemo(() => Math.max(1, Math.ceil(total / perPage)), [total, perPage])
 
   return (
     <div className="space-y-6">

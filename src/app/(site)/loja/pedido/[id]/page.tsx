@@ -45,11 +45,6 @@ export default async function PedidoPage({ params }: PedidoPageProps) {
   const frete = order.frete ?? 0
   const totalGeral = Number(totalProdutos) + Number(frete)
 
-  const itemsForButton = order.items.map((item) => ({
-    name: item.name,
-    quantity: item.quantity,
-    price: Number(item.price),
-  }))
 
   return (
     <main className="max-w-2xl mx-auto py-10 px-4 min-h-screen bg-[var(--color-bg-primary)] text-[var(--color-text-primary)]">

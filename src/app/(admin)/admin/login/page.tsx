@@ -29,7 +29,7 @@ export default function AdminLoginPage() {
       } else {
         router.push('/admin')
       }
-    } catch (err) {
+    } catch {
       setError('Erro de conexão. Tente novamente.')
     } finally {
       setLoading(false)

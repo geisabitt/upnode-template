@@ -30,7 +30,7 @@ export default function ProductForm({ mode, categories, product }: Props) {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([])
   const [previewUrls, setPreviewUrls] = useState<string[]>([])
   const [uploadedImageUrls, setUploadedImageUrls] = useState<string[]>([])
-  const [existingImages, setExistingImages] = useState<ProductImage[]>(product?.images ?? [])
+  const [existingImages] = useState<ProductImage[]>(product?.images ?? [])
   const [removedImageIds, setRemovedImageIds] = useState<string[]>([])
   const [isUploading, setIsUploading] = useState(false)
   const [isSaving, setIsSaving] = useState(false)

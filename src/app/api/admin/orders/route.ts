@@ -1,3 +1,4 @@
+import type { Prisma } from '@/generated/client'
 import { withModuleApi } from '@/core/lib/module-server'
 import { withAdmin } from '@/core/lib/admin-access'
 import { NextResponse } from 'next/server'
@@ -10,7 +11,7 @@ const GET = withAdmin(async function GET(request: Request) {
   const page = Number(searchParams.get('page') || '1')
   const perPage = Number(searchParams.get('perPage') || '10')
 
-  const where: any = {}
+  const where: Prisma.OrderWhereInput = {}
 
   if (status && status !== 'ALL') {
     where.statusPagamento = status

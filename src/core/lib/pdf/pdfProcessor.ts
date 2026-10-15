@@ -2,7 +2,8 @@
  * Processador de PDFs usando pdfjs-dist
  * Responsável por: carregar PDF, extrair texto, gerar imagens e fazer crop
  */
-import type { ContentBounds, CanvasImage } from './types'
+import type { ContentBounds } from './types'
+import type { PDFDocumentProxy } from 'pdfjs-dist'
 
 interface ThermalFilterOptions {
   contrast: number
@@ -48,13 +49,13 @@ export class PDFProcessor {
   /**
    * Extrai texto de todas as páginas do PDF
    */
-  private static async extractTextFromAllPages(pdf: any): Promise<string> {
+  private static async extractTextFromAllPages(pdf: PDFDocumentProxy): Promise<string> {
     let fullText = ''
 
     for (let i = 1; i <= pdf.numPages; i++) {
       const page = await pdf.getPage(i)
       const content = await page.getTextContent()
-      const strings = content.items.map((item: any) => item.str)
+      const strings = content.items.map((item) => 'str' in item ? item.str : '')
       fullText += strings.join(' ') + '\n'
     }
 
@@ -65,7 +66,7 @@ export class PDFProcessor {
    * Renderiza uma página específica em imagem
    */
   private static async renderPageToImage(
-    pdf: any,
+    pdf: PDFDocumentProxy,
     pageNumber: number
   ): Promise<string> {
     const page = await pdf.getPage(pageNumber)
@@ -90,7 +91,7 @@ export class PDFProcessor {
       canvasContext: context,
       viewport,
       canvas
-    } as any).promise
+    }).promise
 
     this.applyThermalFilter(canvas, this.DEFAULT_THERMAL_OPTIONS)
 

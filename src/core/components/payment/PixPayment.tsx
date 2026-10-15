@@ -38,9 +38,9 @@ export default function PixPayment({ paymentId, total }: PixPaymentProps) {
         const data = await res.json();
         setQrCode(data);
         setError(null);
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error('[Pix QRCode Error]:', err);
-        setError(err.message || 'Erro ao gerar QR Code');
+        setError(err instanceof Error ? err.message : 'Erro ao gerar QR Code');
         toast.error('Erro ao gerar QR Code Pix');
       } finally {
         setIsLoading(false);
@@ -58,7 +58,7 @@ export default function PixPayment({ paymentId, total }: PixPaymentProps) {
       setCopied(true);
       toast.success('Copiado para a área de transferência!');
       setTimeout(() => setCopied(false), 2000);
-    } catch (err) {
+    } catch {
       toast.error('Erro ao copiar');
     }
   };
@@ -142,7 +142,7 @@ export default function PixPayment({ paymentId, total }: PixPaymentProps) {
           </h4>
           <ol className="text-sm text-[var(--color-text-secondary)] space-y-2 list-decimal list-inside">
             <li>Abra o app do seu banco</li>
-            <li>Escolha a opção "Pagar com Pix"</li>
+            <li>Escolha a opção &quot;Pagar com Pix&quot;</li>
             <li>Escaneie o QR Code acima ou cole a chave Pix</li>
             <li>Confirme o valor e autorize a transação</li>
           </ol>

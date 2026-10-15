@@ -9,7 +9,7 @@ import {
 } from 'react'
 
 export type CartItem = {
-  images: any
+  images: string[]
   productId: string
   name: string
   slug: string

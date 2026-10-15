@@ -19,7 +19,7 @@ export default async function OrderDetailsPage({ params }: { params: Promise<{ i
 
   if (!order) return notFound()
 
-  const address = order.address as any
+  const address = order.address as Record<string, string> | null
 
   return (
     <div className="space-y-6  bg-[var(--color-bg-card)] p-6 rounded-2xl">

@@ -11,7 +11,7 @@ export async function POST(request: Request) {
       const session = verifyAuthToken(token)
       userId = session?.id
     }
-  } catch (error) {
+  } catch {
     // Ignora erro, faz logout mesmo sem userId
   }
 

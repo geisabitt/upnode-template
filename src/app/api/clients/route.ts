@@ -77,7 +77,7 @@ async function POST(req: Request) {
 
 
     return NextResponse.json({ client }, { status: 201 })
-  } catch (error) {
+  } catch {
     const message = 'Não foi possível criar a subconta.'
     return NextResponse.json({ error: message }, { status: 500 })
   }

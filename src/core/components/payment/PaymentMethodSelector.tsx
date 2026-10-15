@@ -5,7 +5,6 @@
 
 'use client';
 
-import { useState } from 'react';
 import { CreditCard, Zap } from 'lucide-react';
 
 interface PaymentMethodSelectorProps {

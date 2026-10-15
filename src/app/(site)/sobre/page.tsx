@@ -22,7 +22,7 @@ export default async function SobrePage() {
       {/* Imagens */}
       <div className="grid md:grid-cols-2 gap-6">
         {page.coverImage && (
-          <img src={page.coverImage} className="rounded-2xl" />
+          <img alt={page.title} src={page.coverImage} className="rounded-2xl" />
         )}
       </div>
 

@@ -5,8 +5,8 @@ export const dynamic = 'force-dynamic'
 import { notFound } from "next/navigation"
 
 type FAQItem = {
-  question: string
-  answer: string
+  pergunta: string
+  resposta: string
 }
 
 async function getPage() { return getCustomPage('personalizado') }
@@ -27,7 +27,7 @@ export default async function PersonalizadosPage() {
 
       {/* FAQ */}
       <div className="space-y-4">
-        {faqs.map((item: any, i: number) => (
+        {faqs.map((item, i) => (
           <div key={i} className="border border-[var(--color-border)] rounded-2xl p-4 bg-[var(--color-bg-card)]">
             <h2 className="font-semibold">{item.pergunta}</h2>
             <p className="text-[var(--color-text-secondary)] mt-2">{item.resposta}</p>

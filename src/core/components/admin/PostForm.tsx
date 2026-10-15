@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { useRouter } from 'next/navigation'
-import DeletePostButton from '@/core/components/admin/DeletePostButton'
 import toast from 'react-hot-toast'
 import type { Category, Post, PostFormData } from '@/core/types/admin'
 
@@ -195,7 +194,7 @@ export default function PostForm({ mode, categories, post }: Props) {
 
             {preview && (
               <div className="overflow-hidden rounded-3xl border border-[var(--color-admin-border)]">
-                <img src={preview} className="h-48 w-full object-cover" />
+                <img alt="Prévia da capa do artigo" src={preview} className="h-48 w-full object-cover" />
               </div>
             )}
 
