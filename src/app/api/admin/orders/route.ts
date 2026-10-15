@@ -1,7 +1,8 @@
+import { withAdmin } from '@/core/lib/admin-access'
 import { NextResponse } from 'next/server'
 import { prisma } from '@/core/lib/prisma'
 
-export async function GET(request: Request) {
+export const GET = withAdmin(async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
   const status = searchParams.get('status') || ''
   const search = searchParams.get('search') || ''
@@ -29,4 +30,4 @@ export async function GET(request: Request) {
   ])
 
   return NextResponse.json({ total, page, perPage, orders })
-}
+})

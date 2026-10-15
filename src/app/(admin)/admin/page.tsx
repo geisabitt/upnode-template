@@ -1,3 +1,4 @@
+import { requireAdminPage } from '@/core/lib/admin-access'
 // src/app/(admin)/admin/page.tsx
 import { prisma } from '@/core/lib/prisma'
 import { subDays, format, eachDayOfInterval } from 'date-fns'
@@ -66,6 +67,8 @@ async function getDashboardData() {
 }
 
 export default async function AdminPage() {
+  await requireAdminPage()
+
   const {
     totalOrders,
     faturamentoTotal,

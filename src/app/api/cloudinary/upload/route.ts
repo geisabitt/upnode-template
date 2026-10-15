@@ -1,7 +1,8 @@
+import { withAdmin } from '@/core/lib/admin-access'
 import { NextResponse } from 'next/server'
 import { uploadFilesToCloudinary } from '@/core/lib/cloudinary'
 
-export async function POST(request: Request) {
+export const POST = withAdmin(async function POST(request: Request) {
   const formData = await request.formData()
   const files = formData.getAll('files') as Array<File | string>
 
@@ -16,10 +17,15 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Formato de arquivo inválido.' }, { status: 400 })
     }
 
+    if (blobs.length > 20 || blobs.some(file => file.size > 10 * 1024 * 1024 ||
+        !['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/avif'].includes(file.type))) {
+      return NextResponse.json({ error: 'Envie até 20 imagens válidas de no máximo 10 MB cada.' }, { status: 400 })
+    }
+
     const urls = await uploadFilesToCloudinary(blobs)
     return NextResponse.json({ urls })
   } catch (error) {
     console.error('Cloudinary upload error:', error)
     return NextResponse.json({ error: 'Falha ao enviar imagens para o Cloudinary.' }, { status: 500 })
   }
-}
+})

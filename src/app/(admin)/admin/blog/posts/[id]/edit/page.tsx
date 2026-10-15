@@ -1,3 +1,4 @@
+import { requireAdminPage } from '@/core/lib/admin-access'
 // src/app/(admin)/admin/posts/[id]/edit/page.tsx
 
 import { prisma } from '@/core/lib/prisma'
@@ -9,6 +10,8 @@ type Props = {
 }
 
 export default async function EditPostPage({ params }: Props) {
+  await requireAdminPage()
+
   const { id } = await params
 
   const post = await prisma.post.findUnique({

@@ -1,3 +1,4 @@
+import { requireAdminPage } from '@/core/lib/admin-access'
 // src/app/(admin)/admin/products/page.tsx
 
 import Link from 'next/link'
@@ -12,6 +13,8 @@ type ProductsPageProps = {
 export const dynamic = 'force-dynamic'
 
 export default async function ProductsPage({ searchParams }: ProductsPageProps) {
+  await requireAdminPage()
+
   const params = await searchParams
 
   const page = Math.max(1, Number(params?.page || '1') || 1)

@@ -1,3 +1,4 @@
+import { withAdmin } from '@/core/lib/admin-access'
 import { NextResponse } from 'next/server'
 import { prisma } from '@/core/lib/prisma'
 
@@ -6,7 +7,7 @@ type Params = {
 }
 
 /* UPDATE */
-export async function PATCH(req: Request, context: Params) {
+export const PATCH = withAdmin(async function PATCH(req: Request, context: Params) {
   try {
     const { id } = await context.params
     const body = await req.json()
@@ -29,10 +30,10 @@ export async function PATCH(req: Request, context: Params) {
     console.error(error)
     return NextResponse.json({ error: 'Erro ao atualizar' }, { status: 500 })
   }
-}
+})
 
 /* DELETE */
-export async function DELETE(req: Request, context: Params) {
+export const DELETE = withAdmin(async function DELETE(req: Request, context: Params) {
   try {
     const { id } = await context.params
 
@@ -45,4 +46,4 @@ export async function DELETE(req: Request, context: Params) {
     console.error(error)
     return NextResponse.json({ error: 'Erro ao deletar' }, { status: 500 })
   }
-}
+})

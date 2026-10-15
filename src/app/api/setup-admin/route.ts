@@ -1,3 +1,4 @@
+import { mutationGuard } from '@/core/lib/request-security'
 // src/app/api/setup-admin/route.ts
 import { NextResponse } from 'next/server'
 import { prisma } from '@/core/lib/prisma'
@@ -6,6 +7,8 @@ import { hashPassword } from '@/core/lib/auth'
 const SETUP_ADMIN_KEY = process.env.SETUP_ADMIN_KEY
 
 export async function POST(request: Request) {
+  const guard = mutationGuard(request, 'admin-setup')
+  if (guard) return guard
   try {
     // 1. Validar chave de setup
     if (!SETUP_ADMIN_KEY) {

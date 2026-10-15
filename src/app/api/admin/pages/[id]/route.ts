@@ -1,6 +1,7 @@
+import { withAdmin } from '@/core/lib/admin-access'
 import { prisma } from "@/core/lib/prisma"
 
-export async function PATCH(
+export const PATCH = withAdmin(async function PATCH(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
@@ -20,4 +21,4 @@ export async function PATCH(
   })
 
   return Response.json(page)
-}
+})

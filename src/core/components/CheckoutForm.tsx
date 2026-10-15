@@ -16,6 +16,7 @@ export default function CheckoutForm() {
   const { items, clearCart } = useCart()
   const router = useRouter()
   const [frete, setFrete] = useState<number | null>(null)
+  const [quoteToken, setQuoteToken] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const {
@@ -30,8 +31,12 @@ export default function CheckoutForm() {
   const zipCode = watch('address.zipCode')
 
   useEffect(() => {
+    const controller = new AbortController()
     const calcularFrete = async () => {
+      setFrete(null)
+      setQuoteToken(null)
       if (!zipCode || zipCode.length < 8 || items.length === 0) return
+
 
       const quantidade = items.reduce((acc, item) => acc + item.quantity, 0)
 
@@ -40,35 +45,36 @@ export default function CheckoutForm() {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ cepDestino: zipCode, quantidade }),
+          signal: controller.signal,
         })
 
         const data = await res.json()
+        if (controller.signal.aborted) return
         if (Array.isArray(data) && data.length > 0) {
           const melhor = data[0]
-          setFrete(Number(melhor.price))
+          setFrete(Number(melhor.price)); setQuoteToken(melhor.quoteToken)
         } else {
           setFrete(null)
         }
       } catch (err) {
+        if (controller.signal.aborted) return
         console.error('Erro ao calcular frete:', err)
         toast.error('Erro ao calcular o frete.')
       }
     }
 
     calcularFrete()
+    return () => controller.abort()
   }, [zipCode, items])
 
   const onSubmit = async (data: CheckoutFormData) => {
-    console.log('Iniciando onSubmit, dados:', data)
-    console.log('Itens no carrinho:', items)
-    console.log('Frete:', frete)
 
     if (items.length === 0) {
       toast.error('Seu carrinho está vazio')
       return
     }
 
-    if (!frete) {
+    if (frete === null || !quoteToken) {
       toast.error('Calcule o frete antes de finalizar.')
       return
     }
@@ -76,15 +82,12 @@ export default function CheckoutForm() {
     setIsSubmitting(true)
 
     try {
-      console.log('Enviando requisição para /api/orders')
       // Criação do pedido
       const res = await fetch('/api/orders', {
         method: 'POST',
-        body: JSON.stringify({ ...data, items, frete }),
+        body: JSON.stringify({ ...data, items, frete, quoteToken }),
         headers: { 'Content-Type': 'application/json' },
       })
-
-      console.log('Resposta de /api/orders:', res.status, res.statusText)
 
       if (!res.ok) {
         const errorData = await res.json()
@@ -94,11 +97,9 @@ export default function CheckoutForm() {
       }
 
       const orderData = await res.json()
-      console.log('Dados do pedido criado:', orderData)
       const { orderId } = orderData
 
       // Redirecionar para a página de pagamento (checkout transparente Asaas)
-      console.log('Limpando carrinho e redirecionando para pagamento')
       clearCart()
       router.push(`/loja/pedido/${orderId}/pagamento`)
     } catch (err) {
@@ -287,7 +288,7 @@ export default function CheckoutForm() {
           {/* BOTÃO */}
           <button
             type="submit"
-            disabled={isSubmitting || !frete}
+            disabled={isSubmitting || frete === null || !quoteToken}
             className="w-full bg-[var(--color-accent)] text-[var(--color-text-primary)] px-5 py-3 text-sm font-semibold rounded-3xl hover:bg-[var(--color-accent-hover)] transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
             {isSubmitting ? (

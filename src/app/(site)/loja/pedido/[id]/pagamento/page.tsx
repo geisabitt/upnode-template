@@ -86,7 +86,7 @@ export default function PagamentoPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          name: orderData.fullName,
+          orderId: orderData.id,
           email: orderData.email,
           cpf: cpfClean,
           phone: phoneClean,
@@ -100,13 +100,6 @@ export default function PagamentoPage() {
       }
 
       const { customerId } = await res.json()
-
-      // Atualizar o pedido com o customerId
-      await fetch(`/api/orders/${orderData.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ customerId }),
-      })
 
       setOrder({ ...orderData, customerId })
       return customerId

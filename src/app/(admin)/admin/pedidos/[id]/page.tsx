@@ -1,8 +1,11 @@
+import { requireAdminPage } from '@/core/lib/admin-access'
 // src/app/(admin)/admin/pedidos/[id]/page.tsx
 import { prisma } from '@/core/lib/prisma'
 import { notFound } from 'next/navigation'
 
 export default async function OrderDetailsPage({ params }: { params: Promise<{ id: string }> }) {
+  await requireAdminPage()
+
   const { id } = await params
 
   if (!id) return notFound()

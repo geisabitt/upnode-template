@@ -1,7 +1,8 @@
+import { withAdmin } from '@/core/lib/admin-access'
 import { NextResponse } from 'next/server'
 import { prisma } from '@/core/lib/prisma'
 
-export async function GET() {
+export const GET = withAdmin(async function GET() {
   const posts = await prisma.post.findMany({
     include: {
       category: true,
@@ -10,9 +11,9 @@ export async function GET() {
   })
 
   return NextResponse.json(posts)
-}
+})
 
-export async function POST(req: Request) {
+export const POST = withAdmin(async function POST(req: Request) {
   const body = await req.json()
 
   const {
@@ -49,4 +50,4 @@ export async function POST(req: Request) {
   })
 
   return NextResponse.json(post)
-}
+})

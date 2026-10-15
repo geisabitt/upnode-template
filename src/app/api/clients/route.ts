@@ -1,3 +1,4 @@
+import { withAdmin } from '@/core/lib/admin-access'
 // src/app/api/clients/route.ts
 // Cria o DONO DA LOJA como subconta no Asaas e salva no banco (model Client)
 // ℹ️ /api/asaas/create-customer é outra rota — para cliente final que compra na loja
@@ -14,7 +15,8 @@ type CreateClientBody = {
 }
 
 // 📥 GET — lista todos os clientes (donos de loja) cadastrados
-export async function GET() {
+async function GET(request: Request) {
+  void request
   try {
     const clients = await prisma.client.findMany({
       orderBy: { createdAt: 'desc' },
@@ -30,13 +32,13 @@ export async function GET() {
       },
     })
     return NextResponse.json({ clients })
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'Erro ao listar clientes.' }, { status: 500 })
   }
 }
 
 // 📤 POST — cria dono da loja como subconta no Asaas
-export async function POST(req: Request) {
+async function POST(req: Request) {
   try {
     const body = (await req.json()) as CreateClientBody
     const name = body.name?.trim()
@@ -72,11 +74,14 @@ export async function POST(req: Request) {
       },
     })
 
-    console.log(`[Client Created] ${client.name} | asaasId: ${client.asaasAccountId} | walletId: ${client.asaasWalletId}`)
 
     return NextResponse.json({ client }, { status: 201 })
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Erro interno ao criar cliente.'
+    const message = 'Não foi possível criar a subconta.'
     return NextResponse.json({ error: message }, { status: 500 })
   }
 }
+
+const securedGET = withAdmin(GET)
+const securedPOST = withAdmin(POST)
+export { securedGET as GET, securedPOST as POST }

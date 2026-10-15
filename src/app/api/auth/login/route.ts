@@ -1,3 +1,4 @@
+import { mutationGuard } from '@/core/lib/request-security'
 // api/admim/auth/login/route.ts
 
 import { NextResponse } from 'next/server'
@@ -6,6 +7,8 @@ import { logAccess } from '@/core/lib/logger'
 import { createAuthToken, createAuthCookie } from '@/core/lib/session'
 
 export async function POST(request: Request) {
+  const guard = mutationGuard(request, 'admin-login')
+  if (guard) return guard
   await ensureDefaultAdmin()
 
   const body = await request.json().catch(() => null)
@@ -14,7 +17,7 @@ export async function POST(request: Request) {
   }
 
   const user = await validateAdminCredentials(body.email, body.password)
-  if (!user) {
+  if (!user || user.role !== 'admin') {
     return NextResponse.json({ error: 'Credenciais inválidas' }, { status: 401 })
   }
 
