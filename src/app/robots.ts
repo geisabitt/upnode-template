@@ -1,5 +1,5 @@
 import type { MetadataRoute } from 'next'
-import { siteConfig } from '@/client/config/site.config'
+import { canonicalUrl } from '@/core/lib/seo'
 export default function robots(): MetadataRoute.Robots {
-  return { rules: { userAgent: '*', allow: '/', disallow: ['/api/'] }, sitemap: new URL('/sitemap.xml', siteConfig.seo.url).toString() }
+  return { rules: { userAgent: '*', allow: '/', disallow: ['/api/'] }, sitemap: canonicalUrl('/sitemap.xml') }
 }

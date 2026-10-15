@@ -1,34 +1,49 @@
 import type { MetadataRoute } from 'next'
-import { siteConfig } from '@/client/config/site.config'
 import { isModuleEnabled } from '@/core/lib/modules'
 import { portfolioEntries, serviceEntries } from '@/client/config/content.config'
+import { seoConfig } from '@/client/config/seo.config'
+import { canonicalUrl, slugPath, isIndexablePath, isIndexableProduct, isIndexablePost, realDate } from '@/core/lib/seo'
+import { isIndexableEntry } from '@/core/lib/content-seo'
 import { prisma } from '@/core/lib/prisma'
 export const dynamic = 'force-dynamic'
-// Generalized from E&L: disabled sources are never queried; failures are isolated.
+// Preserve E&L's isolated-source design, adding Maribela's generic editorial eligibility.
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const base = siteConfig.seo.url.replace(/\/+$/, '')
-  const entries: MetadataRoute.Sitemap = [{ url: base }]
-  const sources: { prefix: string; load: () => Promise<{ slug: string; updatedAt?: Date }[]> }[] = [
-    { prefix: '/', load: () => prisma.customPage.findMany({ where: { slug: { in: ['sobre', 'personalizado'] } }, select: { slug: true, updatedAt: true } }) },
-  ]
-  if (isModuleEnabled('store')) {
-    entries.push({ url: base + '/loja' })
-    sources.push({ prefix: '/loja/produto/', load: () => prisma.product.findMany({ select: { slug: true, updatedAt: true } }) },
-      { prefix: '/loja/categoria/', load: () => prisma.category.findMany({ where: { slug: { not: 'todos' } }, select: { slug: true } }) })
+  const entries: MetadataRoute.Sitemap = []
+  const add = (path: string, updatedAt?: unknown) => {
+    if (!isIndexablePath(path)) return
+    const date = realDate(updatedAt)
+    entries.push({ url: canonicalUrl(path), ...(date ? { lastModified: date } : {}) })
   }
-  if (isModuleEnabled('blog')) {
-    entries.push({ url: base + '/blog' })
-    sources.push({ prefix: '/blog/', load: () => prisma.post.findMany({ where: { published: true }, select: { slug: true, updatedAt: true } }) },
-      { prefix: '/blog/categoria/', load: () => prisma.blogCategory.findMany({ select: { slug: true, updatedAt: true } }) })
+  add('/')
+  if (isModuleEnabled('store')) add('/loja')
+  if (isModuleEnabled('blog')) add('/blog')
+  for (const [key, prefix, content] of [['portfolio', '/portfolio', portfolioEntries], ['services', '/servicos', serviceEntries]] as const) {
+    if (!isModuleEnabled(key)) continue
+    const eligible = content.filter(entry => isIndexableEntry(entry, prefix))
+    if (eligible.length) add(prefix)
+    for (const entry of eligible) add(slugPath(prefix + '/', entry.slug), entry.updatedAt)
   }
-  for (const [module, prefix, content] of [['portfolio', '/portfolio', portfolioEntries], ['services', '/servicos', serviceEntries]] as const) {
-    if (isModuleEnabled(module)) entries.push({ url: base + prefix }, ...content.map(entry => ({ url: base + prefix + '/' + encodeURIComponent(entry.slug) })))
-  }
-  const results = await Promise.allSettled(sources.map(source => source.load()))
-  results.forEach((result, index) => {
-    if (result.status === 'fulfilled') entries.push(...result.value.map(record => ({ url: base + sources[index].prefix + encodeURIComponent(record.slug),
-      ...(record.updatedAt ? { lastModified: record.updatedAt } : {}) })))
-    else console.error('Sitemap: fonte indisponível', sources[index].prefix)
+  const sources: (() => Promise<void>)[] = [async () => {
+    const pages = await prisma.customPage.findMany({ where: { slug: { in: ['sobre', 'personalizado'] } } })
+    for (const page of pages) if (page.title?.trim() && seoConfig.records.pages['/' + page.slug]?.published !== false) add('/' + page.slug, page.updatedAt)
+  }]
+  if (isModuleEnabled('store')) sources.push(async () => {
+    const products = await prisma.product.findMany({ include: { images: true } })
+    for (const product of products) if (isIndexableProduct(product)) add(slugPath('/loja/produto/', product.slug), product.updatedAt)
+  }, async () => {
+    const categories = await prisma.category.findMany({ where: { slug: { not: 'todos' } }, include: { products: { include: { images: true } } } })
+    for (const category of categories) if (category.name.trim() && category.products.some(isIndexableProduct) && seoConfig.records.categories[category.slug]?.index !== false && seoConfig.records.categories[category.slug]?.published !== false)
+      add(slugPath('/loja/categoria/', category.slug))
   })
+  if (isModuleEnabled('blog')) sources.push(async () => {
+    const posts = await prisma.post.findMany({ where: { published: true } })
+    for (const post of posts) if (isIndexablePost(post)) add(slugPath('/blog/', post.slug), post.updatedAt)
+  }, async () => {
+    const categories = await prisma.blogCategory.findMany({ include: { posts: { where: { published: true } } } })
+    for (const category of categories) if (category.name.trim() && category.posts.some(isIndexablePost) && seoConfig.records.blogCategories[category.slug]?.index !== false && seoConfig.records.blogCategories[category.slug]?.published !== false)
+      add(slugPath('/blog/categoria/', category.slug), category.updatedAt)
+  })
+  const results = await Promise.allSettled(sources.map(source => source()))
+  results.forEach((result, index) => { if (result.status === 'rejected') console.error('Sitemap: fonte indisponível', index) })
   return [...new Map(entries.map(entry => [entry.url, entry])).values()]
 }

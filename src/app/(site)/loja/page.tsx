@@ -1,3 +1,5 @@
+import { pageMetadata } from '@/core/lib/seo'
+import { siteConfig } from '@/client/config/site.config'
 import { requireModule } from '@/core/lib/module-server'
 import Link from 'next/link'
 import { prisma } from '@/core/lib/prisma'
@@ -89,3 +91,4 @@ export default async function LojaPage() {
     </main>
   )
 }
+export const metadata = pageMetadata({ title: "Loja", description: siteConfig.seo.descricao, path: '/loja' })

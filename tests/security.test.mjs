@@ -19,7 +19,7 @@ process.env.MERCADO_PAGO_ACCESS_TOKEN = 'synthetic-access-token'
 process.env.NEXT_PUBLIC_SITE_URL = 'https://shop.example.invalid'
 let cookieJar = new Map(), db = {}, provider = async () => { throw new Error('Unexpected provider call') }
 globalThis.fetch = async () => { throw new Error('Real network disabled in security tests') }
-let cache = new Map(), ip = 0, configOverride = null, contentOverride = null
+let cache = new Map(), ip = 0, configOverride = null, contentOverride = null, seoOverride = null, siteOverride = null
 function load(relative) {
   let file = path.resolve(root, relative)
   if (!fs.existsSync(file) && file.endsWith('.ts')) file += 'x'
@@ -28,6 +28,8 @@ function load(relative) {
   const source = fs.readFileSync(file, 'utf8')
   const code = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX, esModuleInterop: true } }).outputText
   const localRequire = name => {
+    if (name === '@/client/config/seo.config' && seoOverride) return { seoConfig: seoOverride }
+    if (name === '@/client/config/site.config' && siteOverride) return { siteConfig: siteOverride }
     if (name === '@/client/config/modules.config' && configOverride) return { modulesConfig: configOverride }
     if (name === '@/client/config/content.config' && contentOverride) return contentOverride
     if (name === 'next/image') return { __esModule: true, default: () => null }
@@ -45,7 +47,7 @@ function load(relative) {
   vm.runInThisContext(`(function(require,module,exports){${code}\n})`, { filename: file })(localRequire, module, module.exports)
   return module.exports
 }
-function reset() { cache = new Map(); cookieJar = new Map(); db = {}; configOverride = null; contentOverride = null; provider = async () => { throw new Error('Unexpected provider call') } }
+function reset() { cache = new Map(); cookieJar = new Map(); db = {}; configOverride = null; contentOverride = null; seoOverride = null; siteOverride = null; provider = async () => { throw new Error('Unexpected provider call') } }
 function request(url, method = 'GET', body, headers = {}) {
   return new NextRequest('https://shop.example.invalid' + url, { method,
     headers: { 'content-type': 'application/json', 'x-forwarded-for': 'test-' + ++ip, ...headers },
@@ -335,7 +337,7 @@ test('disabled modules disappear from public navigation and home avoids blog que
 
 test('sitemap omits disabled sources without touching commercial/blog models', async () => {
   reset(); configOverride = { store: { enabled: false }, blog: false, portfolio: true, services: true, pwa: true }
-  contentOverride = { portfolioEntries: [{ slug: 'synthetic-project', title: 'Test' }], serviceEntries: [{ slug: 'synthetic-service', title: 'Test' }] }
+  contentOverride = { portfolioEntries: [{ slug: 'synthetic-project', title: 'Test', description: 'Test', content: 'Test' }], serviceEntries: [{ slug: 'synthetic-service', title: 'Test', description: 'Test', content: 'Test' }] }
   db.customPage = { findMany: async () => [{ slug: 'sobre' }] }
   const sitemap = await load('src/app/sitemap.ts').default()
   const urls = sitemap.map(entry => entry.url)
@@ -345,8 +347,8 @@ test('sitemap omits disabled sources without touching commercial/blog models', a
 })
 
 test('active sitemap includes dynamic published posts/catalog but excludes operational URLs', async () => {
-  reset(); db = { customPage: { findMany: async () => [] }, product: { findMany: async () => [{ slug: 'synthetic-product' }] },
-    category: { findMany: async () => [] }, post: { findMany: async ({ where }) => { assert.equal(where.published, true); return [{ slug: 'synthetic-post' }] } }, blogCategory: { findMany: async () => [] } }
+  reset(); db = { customPage: { findMany: async () => [] }, product: { findMany: async () => [{ slug: 'synthetic-product', name: 'Test', description: 'Test', price: 10, stock: 1, images: [] }] },
+    category: { findMany: async () => [] }, post: { findMany: async ({ where }) => { assert.equal(where.published, true); return [{ slug: 'synthetic-post', title: 'Test', content: 'Test', published: true }] } }, blogCategory: { findMany: async () => [] } }
   const urls = (await load('src/app/sitemap.ts').default()).map(entry => entry.url)
   assert.ok(urls.some(url => url.endsWith('/loja/produto/synthetic-product')))
   assert.ok(urls.some(url => url.endsWith('/blog/synthetic-post')))
@@ -387,4 +389,142 @@ test('service worker bypasses commerce, APIs and external origins; disabled mode
   assert.equal(offHandlers.fetch, undefined)
   let activated; offHandlers.activate({ waitUntil: promise => { activated = promise } }); await activated
   assert.equal(retired, true); assert.deepEqual(deleted, ['upnode-pwa-old'])
+})
+
+function seoFixture() {
+  return { indexing: true, products: { mode: 'all', reviewedSlugs: [], requireInStock: false, requireImage: false },
+    records: { pages: {}, products: {}, posts: {}, categories: {}, blogCategories: {} }, identity: { verified: false, sameAs: [], address: null } }
+}
+const seoProduct = (slug = 'synthetic-product') => ({ slug, name: 'Synthetic product', description: 'Real test description', price: '10.00', stock: 0, images: [{ url: '/logo-horizontal.png' }] })
+const seoPost = (slug = 'synthetic-post') => ({ slug, title: 'Synthetic article', content: '<h2>Subtitle</h2><p>Test content</p>', published: true,
+  updatedAt: new Date('2026-01-02T12:00:00Z'), createdAt: new Date('2026-01-01T12:00:00Z'), excerpt: 'Excerpt', coverImage: '/logo-horizontal.png' })
+
+test('canonical remains on configured origin, strips queries/fragments and rejects foreign hosts/credentials', () => {
+  reset(); siteOverride = { ...load('src/client/config/site.config.ts').siteConfig, nome: 'Synthetic Brand', seo: { url: 'https://seo.example.invalid', titulo: 'Synthetic', descricao: 'Description', ogImage: '/logo.png' } }
+  const seo = load('src/core/lib/seo.ts')
+  assert.equal(seo.canonicalUrl('/blog/test?tracking=1#anchor'), 'https://seo.example.invalid/blog/test')
+  assert.throws(() => seo.canonicalUrl('https://another.example.invalid/blog/test'))
+  assert.throws(() => seo.canonicalUrl('//another.example.invalid/blog/test'))
+  assert.throws(() => seo.canonicalUrl('https://user:password@seo.example.invalid/test'))
+  assert.equal(seo.publicImageUrl('javascript:alert(1)'), undefined)
+  const metadata = seo.pageMetadata({ title: 'Article', description: '<p>Visible description</p>', path: '/blog/test', article: true })
+  assert.equal(metadata.alternates.canonical, 'https://seo.example.invalid/blog/test')
+  assert.equal(metadata.openGraph.url, metadata.alternates.canonical); assert.equal(metadata.openGraph.type, 'article')
+  assert.equal(metadata.twitter.card, 'summary_large_image'); assert.equal(metadata.description, 'Visible description')
+  assert.ok(metadata.title.absolute.endsWith('Synthetic Brand'))
+})
+
+test('index policy is editorial and does not impose an in-stock/allowlist requirement by default', () => {
+  reset(); seoOverride = seoFixture(); const seo = load('src/core/lib/seo.ts'), product = seoProduct()
+  assert.equal(seo.isIndexableProduct(product), true)
+  seoOverride.products.requireInStock = true; assert.equal(seo.isIndexableProduct(product), false)
+  seoOverride.products.requireInStock = false; seoOverride.products.mode = 'reviewed'
+  assert.equal(seo.isIndexableProduct(product), false)
+  seoOverride.products.reviewedSlugs = [product.slug]; assert.equal(seo.isIndexableProduct(product), true)
+  seoOverride.records.products[product.slug] = { published: false }; assert.equal(seo.isIndexableProduct(product), false)
+  seoOverride.records.products[product.slug] = { index: false }; assert.equal(seo.isIndexableProduct(product), false)
+  assert.equal(seo.isIndexablePost({ ...seoPost(), published: false }), false)
+  assert.equal(seo.isIndexablePost(seoPost()), true)
+  seoOverride.records.posts['synthetic-post'] = { index: false }; assert.equal(seo.isIndexablePost(seoPost()), false)
+  for (const route of ['/admin', '/api/orders', '/loja/checkout', '/loja/carrinho', '/loja/meus-pedidos', '/loja/pedido/test', '/pedido/test', '/offline']) assert.equal(seo.isIndexablePath(route), false)
+})
+
+test('business schemas require verified identity; address is never inferred from a city string', () => {
+  reset(); seoOverride = seoFixture(); const seo = load('src/core/lib/seo.ts')
+  assert.equal(seo.organizationSchema(), null); assert.equal(seo.websiteSchema(), null); assert.equal(seo.localBusinessSchema(), null)
+  seoOverride.identity.verified = true
+  assert.equal(seo.organizationSchema()['@type'], 'Organization'); assert.equal(seo.websiteSchema()['@type'], 'WebSite')
+  assert.equal(seo.localBusinessSchema(), null)
+  seoOverride.identity.address = { streetAddress: 'Synthetic address', addressLocality: 'Test city', addressCountry: 'BR' }
+  const local = seo.localBusinessSchema()
+  assert.equal(local.address.streetAddress, 'Synthetic address'); assert.equal(local['@id'], seo.organizationSchema()['@id'])
+  for (const key of ['aggregateRating', 'review', 'openingHours', 'geo', 'priceRange']) assert.ok(!(key in local))
+})
+
+test('Product and BlogPosting markup reflect visible real values, omit invented publication dates and safely serialize', () => {
+  reset(); const seo = load('src/core/lib/seo.ts'), product = seoProduct()
+  const schema = seo.productSchema(product)
+  assert.equal(schema.offers.price, '10.00'); assert.equal(schema.offers.availability, 'https://schema.org/OutOfStock')
+  assert.equal(seo.productSchema({ ...product, images: [] }), null)
+  assert.equal(seo.productSchema({ ...product, price: 'NaN' }), null)
+  const article = seo.blogPostingSchema(seoPost())
+  assert.equal(article.dateModified, '2026-01-02T12:00:00.000Z'); assert.ok(!('datePublished' in article)); assert.ok(!('author' in article))
+  assert.equal(seo.blogPostingSchema({ ...seoPost(), published: false }), null)
+  const serialized = seo.serializeJsonLd({ title: '</script><script>alert(1)</script>\u2028' })
+  assert.ok(!serialized.includes('<')); assert.ok(!serialized.includes('\u2028'))
+  assert.equal(JSON.parse(serialized).title, '</script><script>alert(1)</script>\u2028')
+  assert.equal(seo.realDate('not-a-date'), undefined); assert.equal(seo.realDate('2026-02-31'), undefined); assert.equal(seo.realDate('42'), undefined)
+})
+
+test('sitemap filters drafts/noindex, empty categories and nonreviewed products while keeping static URLs on query failures', async () => {
+  reset(); seoOverride = seoFixture(); seoOverride.products.mode = 'reviewed'; seoOverride.products.reviewedSlugs = ['approved']
+  seoOverride.records.posts['noindex'] = { index: false }
+  const approved = { ...seoProduct('approved'), updatedAt: new Date('2026-01-01T00:00:00Z') }, unreviewed = seoProduct('unreviewed')
+  db = { customPage: { findMany: async () => [{ slug: 'sobre', title: 'About', updatedAt: 'invalid' }] },
+    product: { findMany: async () => [approved, unreviewed] }, category: { findMany: async () => [
+      { slug: 'empty', name: 'Empty', products: [] }, { slug: 'eligible', name: 'Eligible', products: [approved] }] },
+    post: { findMany: async () => [seoPost('published'), { ...seoPost('draft'), published: false }, seoPost('noindex')] },
+    blogCategory: { findMany: async () => [{ slug: 'empty-blog', name: 'Empty', posts: [] }] } }
+  const api = load('src/app/sitemap.ts'), first = await api.default(), urls = first.map(entry => entry.url)
+  assert.ok(urls.some(url => url.endsWith('/loja/produto/approved')))
+  for (const slug of ['unreviewed', 'draft', 'noindex', 'empty-blog', '/empty']) assert.ok(!urls.some(url => url.endsWith(slug)), slug)
+  assert.ok(!('lastModified' in first.find(entry => entry.url.endsWith('/sobre'))))
+  db.product.findMany = async () => { throw new Error('Synthetic failure') }
+  const second = await api.default()
+  assert.ok(second.some(entry => entry.url.endsWith('/loja'))); assert.ok(second.some(entry => entry.url.endsWith('/blog/published')))
+  assert.equal(new Set(second.map(entry => entry.url)).size, second.length)
+})
+
+test('robots allows noindex pages to be crawled and uses only the configured domain', () => {
+  reset(); const robots = load('src/app/robots.ts').default()
+  assert.equal(robots.rules.allow, '/'); assert.deepEqual(robots.rules.disallow, ['/api/'])
+  assert.ok(robots.sitemap.endsWith('/sitemap.xml')); assert.ok(!JSON.stringify(robots).includes('/admin/'))
+})
+
+test('record metadata consumes PostSEO and missing product/blog category/article return notFound', async () => {
+  reset(); const post = { ...seoPost(), seo: { metaTitle: 'Own title', metaDesc: 'Own description', keywords: 'one,two' }, category: null }
+  db.post = { findFirst: async () => post }
+  const article = load('src/app/(site)/blog/[slug]/page.tsx')
+  const metadata = await article.generateMetadata({ params: Promise.resolve({ slug: post.slug }) })
+  assert.ok(metadata.title.absolute.startsWith('Own title')); assert.equal(metadata.description, 'Own description'); assert.deepEqual(metadata.keywords, ['one', 'two'])
+  db.post.findFirst = async () => null
+  await assert.rejects(article.generateMetadata({ params: Promise.resolve({ slug: 'missing' }) }), /NEXT_NOT_FOUND/)
+  db.product = { findUnique: async () => null }; db.blogCategory = { findUnique: async () => null }
+  await assert.rejects(load('src/app/(site)/loja/produto/[slug]/page.tsx').generateMetadata({ params: Promise.resolve({ slug: 'missing' }) }), /NEXT_NOT_FOUND/)
+  await assert.rejects(load('src/app/(site)/blog/categoria/[slug]/page.tsx').generateMetadata({ params: Promise.resolve({ slug: 'missing' }) }), /NEXT_NOT_FOUND/)
+})
+
+test('HTML/Markdown keep headings and safe links without scripts, events or unsafe protocols', () => {
+  reset(); const React = require('react'), { renderToStaticMarkup } = require('react-dom/server')
+  const { ContentBody, safeContentHref } = load('src/core/components/ContentBody.tsx')
+  const html = renderToStaticMarkup(React.createElement(ContentBody, { content: '<h1>Title</h1><h3>Subtitle</h3><a href="/sobre" onclick="evil()">About</a><a href="jav&#97;script:alert(1)">Unsafe</a><script>evil()</script><img src=x onerror=evil()>' }))
+  assert.ok(html.includes('<h2>Title</h2>')); assert.ok(html.includes('<h3>Subtitle</h3>')); assert.ok(html.includes('href="/sobre"'))
+  for (const value of ['<script', 'onclick', 'onerror', 'javascript:', '<img']) assert.ok(!html.includes(value))
+  assert.equal(safeContentHref('data:text/html,evil'), undefined)
+  const markdown = renderToStaticMarkup(React.createElement(ContentBody, { format: 'markdown', content: '## Subtitle\n[About](/sobre)' }))
+  assert.ok(markdown.includes('<h2>Subtitle</h2>')); assert.ok(markdown.includes('href="/sobre"'))
+})
+
+test('Service metadata/schema use actual entry fields and do not invent pricing or address', () => {
+  reset(); configOverride = { store: { enabled: false }, blog: false, portfolio: true, services: true, pwa: false }
+  const entry = { slug: 'service', title: 'Visible service title', description: 'Visible description', content: 'Visible content', seo: { title: 'Own metadata title' } }
+  const { entryMetadata, serviceSchema } = load('src/core/lib/content-seo.ts')
+  assert.ok(entryMetadata(entry, '/servicos').title.absolute.startsWith('Own metadata title'))
+  const schema = serviceSchema(entry)
+  assert.equal(schema['@type'], 'Service'); assert.equal(schema.name, entry.title)
+  for (const key of ['offers', 'areaServed', 'aggregateRating', 'address']) assert.ok(!(key in schema))
+  assert.equal(serviceSchema({ ...entry, published: false }), null)
+})
+
+test('related links only refer to existing published records and respect disabled modules', async () => {
+  reset(); configOverride = { store: { enabled: true, checkout: true }, blog: true, portfolio: false, services: true, pwa: false }
+  contentOverride = { serviceEntries: [{ slug: 'service', title: 'Visible service', content: 'Content' }, { slug: 'draft-service', title: 'Draft', published: false }], portfolioEntries: [] }
+  db.product = { findUnique: async ({ where }) => where.slug === 'product' ? seoProduct('product') : null }
+  db.post = { findFirst: async () => null }
+  const { RelatedContent } = load('src/core/components/RelatedContent.tsx')
+  const html = require('react-dom/server').renderToStaticMarkup(await RelatedContent({ related: { products: ['product', 'missing'], services: ['service', 'draft-service'], posts: ['missing-post'] } }))
+  assert.ok(html.includes('/loja/produto/product')); assert.ok(html.includes('/servicos/service'))
+  assert.ok(!html.includes('missing')); assert.ok(!html.includes('draft-service'))
+  reset(); configOverride = { store: { enabled: false }, blog: false, portfolio: false, services: false, pwa: false }
+  assert.equal(await load('src/core/components/RelatedContent.tsx').RelatedContent({ related: { products: ['product'], services: ['service'], posts: ['post'] } }), null)
 })

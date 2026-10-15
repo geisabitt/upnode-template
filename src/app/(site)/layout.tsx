@@ -1,3 +1,4 @@
+import { seoConfig } from '@/client/config/seo.config'
 export const dynamic = 'force-dynamic'
 // src/app/(site)/layout.tsx
 import type { Metadata, Viewport } from "next";
@@ -7,6 +8,8 @@ import { Toaster } from "react-hot-toast";
 import { siteConfig } from "@/client/config/site.config";
 import { isModuleEnabled } from '@/core/lib/modules'
 import PwaProvider from '@/core/pwa/PwaProvider'
+import { JsonLd } from '@/core/components/JsonLd'
+import { organizationSchema, websiteSchema, localBusinessSchema } from '@/core/lib/seo'
 import Header from "@/client/components/Header";
 import Footer from "@/client/components/Footer";
 
@@ -92,6 +95,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
           color: 'var(--color-text-primary)',
         }}
       >
+        <JsonLd data={organizationSchema()} /><JsonLd data={websiteSchema()} /><JsonLd data={localBusinessSchema()} />
         <PwaProvider enabled={isModuleEnabled('pwa')} />
         <Toaster position="top-right" reverseOrder={false} />
         <CartProvider>
@@ -102,7 +106,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
               style={{ backgroundColor: 'var(--color-bg-primary)' }}>
               {children}
             </main>
-            <Footer />
+            <Footer businessAddress={seoConfig.identity.verified && seoConfig.identity.address ? [seoConfig.identity.address.streetAddress, seoConfig.identity.address.addressLocality, seoConfig.identity.address.addressRegion, seoConfig.identity.address.postalCode, seoConfig.identity.address.addressCountry].filter(Boolean).join(', ') : null} />
           </div>
         </CartProvider>
       </body>
