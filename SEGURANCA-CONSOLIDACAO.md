@@ -1,5 +1,9 @@
 # Consolidação de segurança — primeira etapa
 
+Atualização da etapa seguinte: o bloqueio de layout/build foi resolvido. Configurações
+de módulos e validações posteriores estão em [MODULOS-E-BUILD.md](MODULOS-E-BUILD.md).
+Os resultados abaixo registram o estado da primeira etapa.
+
 Implementação exclusiva na matriz, branch `desenvolvimento`, criada de `main` com árvore limpa.
 Clientes, backups, schema e migrations não foram alterados. Não houve banco real, cobrança,
 push, merge ou deploy. Nenhum arquivo de ambiente foi lido/copied para validação.

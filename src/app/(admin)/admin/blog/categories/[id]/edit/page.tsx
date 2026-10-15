@@ -1,3 +1,4 @@
+import { requireModule } from '@/core/lib/module-server'
 import { requireAdminPage } from '@/core/lib/admin-access'
 import { prisma } from '@/core/lib/prisma'
 import CategoryForm from '@/core/components/admin/CategoryForm'
@@ -5,6 +6,7 @@ import CategoryForm from '@/core/components/admin/CategoryForm'
 export default async function EditCategoryPage(
   { params }: { params: Promise<{ id: string }> }
 ) {
+  requireModule('blog')
   await requireAdminPage()
 
   const { id } = await params

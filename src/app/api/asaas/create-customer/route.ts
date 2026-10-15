@@ -1,3 +1,4 @@
+import { withModuleApi } from '@/core/lib/module-server'
 import { NextRequest } from 'next/server'
 import { asaasFetch, type AsaasCustomer } from '@/core/lib/asaas'
 import { prisma } from '@/core/lib/prisma'
@@ -5,7 +6,7 @@ import { canAccessOrder } from '@/core/lib/order-access'
 import { mutationGuard, privateJson } from '@/core/lib/request-security'
 
 export const runtime = 'nodejs'
-export async function POST(req: NextRequest) {
+async function POST(req: NextRequest) {
   const guard = mutationGuard(req, 'asaas-customer')
   if (guard) return guard
   const body = await req.json().catch(() => null)
@@ -31,3 +32,6 @@ export async function POST(req: NextRequest) {
     return privateJson({ success: true, customerId })
   } catch { return privateJson({ error: 'Não foi possível cadastrar o pagador.' }, 502) }
 }
+
+const modulePOST = withModuleApi('/api/asaas/create-customer', POST)
+export { modulePOST as POST }

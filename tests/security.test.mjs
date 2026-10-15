@@ -19,14 +19,20 @@ process.env.MERCADO_PAGO_ACCESS_TOKEN = 'synthetic-access-token'
 process.env.NEXT_PUBLIC_SITE_URL = 'https://shop.example.invalid'
 let cookieJar = new Map(), db = {}, provider = async () => { throw new Error('Unexpected provider call') }
 globalThis.fetch = async () => { throw new Error('Real network disabled in security tests') }
-let cache = new Map(), ip = 0
+let cache = new Map(), ip = 0, configOverride = null, contentOverride = null
 function load(relative) {
-  const file = path.resolve(root, relative)
+  let file = path.resolve(root, relative)
+  if (!fs.existsSync(file) && file.endsWith('.ts')) file += 'x'
   if (cache.has(file)) return cache.get(file).exports
   const module = { exports: {} }; cache.set(file, module)
   const source = fs.readFileSync(file, 'utf8')
   const code = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX, esModuleInterop: true } }).outputText
   const localRequire = name => {
+    if (name === '@/client/config/modules.config' && configOverride) return { modulesConfig: configOverride }
+    if (name === '@/client/config/content.config' && contentOverride) return contentOverride
+    if (name === 'next/image') return { __esModule: true, default: () => null }
+    if (name === 'server-only') return {}
+    if (name === 'next/navigation') return { notFound: () => { throw new Error('NEXT_NOT_FOUND') } }
     if (name === '@/core/lib/prisma') return { prisma: db, default: db }
     if (name === '@/generated/client') return { Prisma: { Decimal, PrismaClientKnownRequestError: class extends Error {} } }
     if (name === 'next/headers') return { cookies: async () => ({ get: name => cookieJar.has(name) ? { value: cookieJar.get(name) } : undefined }) }
@@ -39,7 +45,7 @@ function load(relative) {
   vm.runInThisContext(`(function(require,module,exports){${code}\n})`, { filename: file })(localRequire, module, module.exports)
   return module.exports
 }
-function reset() { cache = new Map(); cookieJar = new Map(); db = {}; provider = async () => { throw new Error('Unexpected provider call') } }
+function reset() { cache = new Map(); cookieJar = new Map(); db = {}; configOverride = null; contentOverride = null; provider = async () => { throw new Error('Unexpected provider call') } }
 function request(url, method = 'GET', body, headers = {}) {
   return new NextRequest('https://shop.example.invalid' + url, { method,
     headers: { 'content-type': 'application/json', 'x-forwarded-for': 'test-' + ++ip, ...headers },
@@ -264,4 +270,121 @@ test('PIX rejects forged access before provider request and validates payment as
   assert.equal((await api.GET(request('/api/asaas/pix-qrcode?paymentId=pay_test'))).status, 200)
   provider = async () => ({ externalReference: 'order-one', customer: 'other', billingType: 'PIX', value: 25 })
   assert.equal((await api.GET(request('/api/asaas/pix-qrcode?paymentId=pay_test'))).status, 404)
+})
+
+test('module defaults preserve commerce and blog; disabled store cannot enable checkout', () => {
+  reset(); const { defaultModules, moduleEnabled, routeEnabled } = load('src/core/lib/module-config.ts')
+  assert.equal(moduleEnabled(defaultModules, 'store'), true); assert.equal(moduleEnabled(defaultModules, 'checkout'), true)
+  for (const route of ['/loja', '/loja/produto/item', '/loja/carrinho', '/loja/checkout', '/loja/pedido/id', '/blog']) assert.equal(routeEnabled(defaultModules, route), true)
+  const off = { ...defaultModules, store: { enabled: false, checkout: true } }
+  assert.equal(moduleEnabled(off, 'checkout'), false)
+  for (const route of ['/loja', '/loja/produto/item', '/loja/carrinho', '/loja/checkout', '/loja/pedido/id', '/pedido/id', '/carrinho', '/api/products', '/api/orders', '/api/asaas/webhook', '/api/mercado-pago/webhook']) assert.equal(routeEnabled(off, route), false, route)
+  for (const route of ['/', '/sobre', '/personalizado', '/loja-inexistente', '/api/admin/orders', '/api/admin/products', '/admin/pedidos']) assert.equal(routeEnabled(off, route), true, route)
+  assert.equal(routeEnabled(off, '/api/admin/products', 'POST'), false)
+})
+
+test('catalog-only mode keeps historical email + CPF lookup but blocks new orders, cart and payments', async () => {
+  reset(); const defaults = load('src/core/lib/module-config.ts').defaultModules
+  configOverride = { ...defaults, store: { enabled: true, checkout: false } }
+  const routes = load('src/core/lib/module-config.ts').routeEnabled
+  for (const path of ['/loja', '/loja/produto/test', '/loja/meus-pedidos', '/loja/pedido/test', '/api/orders/find']) assert.equal(routes(configOverride, path), true)
+  for (const path of ['/loja/carrinho', '/loja/checkout', '/loja/pedido/test/pagamento', '/api/asaas/create-payment']) assert.equal(routes(configOverride, path), false)
+  assert.equal((await load('src/app/api/orders/route.ts').POST(request('/api/orders', 'POST', {}))).status, 404)
+  db.order = { findMany: async () => [] }
+  assert.equal((await load('src/app/api/orders/find/route.ts').POST(request('/api/orders/find', 'POST', { email: 'buyer@example.invalid', cpf: '00000000000' }))).status, 200)
+})
+
+test('disabled commerce APIs return 404 before parsing input, database/authentication or providers', async () => {
+  reset(); configOverride = { store: { enabled: false }, blog: true, portfolio: false, services: false, pwa: false }
+  const paths = ['products', 'categorias', 'orders', 'orders/[id]', 'orders/find', 'frete', 'clients',
+    'asaas/create-customer', 'asaas/create-payment', 'asaas/pix-qrcode', 'asaas/validate-key', 'asaas/webhook',
+    'mercado-pago/preference', 'mercado-pago/webhook']
+  for (const path of paths) {
+    const api = load('src/app/api/' + path + '/route.ts')
+    for (const method of ['GET', 'POST', 'PATCH', 'DELETE']) if (api[method]) {
+      const req = new NextRequest('https://shop.example.invalid/api/' + path, { method,
+        ...(method === 'GET' ? {} : { body: '{invalid-json' }) })
+      const response = await api[method](req, { params: Promise.resolve({ id: 'test' }) })
+      assert.equal(response.status, 404, path + ' ' + method); assert.equal(response.headers.get('cache-control'), 'no-store')
+    }
+  }
+  assert.equal((await load('src/app/api/admin/products/route.ts').POST(request('/api/admin/products', 'POST', {}))).status, 404)
+  assert.equal((await load('src/app/api/admin/orders/route.ts').GET(request('/api/admin/orders'))).status, 401)
+})
+
+test('blog switch blocks public pages and CMS mutations, retaining authenticated history reads', async () => {
+  reset(); configOverride = { store: { enabled: true, checkout: true }, blog: false, portfolio: false, services: false, pwa: false }
+  const api = load('src/app/api/admin/blog/posts/route.ts')
+  assert.equal((await api.POST(request('/api/admin/blog/posts', 'POST', {}))).status, 404)
+  assert.equal((await api.GET(request('/api/admin/blog/posts'))).status, 401)
+  const page = load('src/app/(site)/blog/page.tsx').default
+  await assert.rejects(page(), /NEXT_NOT_FOUND/)
+})
+
+test('disabled modules disappear from public navigation and home avoids blog queries', async () => {
+  reset(); configOverride = { store: { enabled: false }, blog: false, portfolio: false, services: false, pwa: false }
+  const React = require('react'), { renderToStaticMarkup } = require('react-dom/server')
+  const { CartProvider } = load('src/core/context/CartContext.tsx')
+  const Header = load('src/client/components/Header.tsx').default
+  const html = renderToStaticMarkup(React.createElement(CartProvider, null, React.createElement(Header)))
+  assert.ok(!/href="\/(loja|blog|portfolio|servicos)/.test(html)); assert.ok(html.includes('wa.me'))
+  const home = await load('src/client/home/HomePage.tsx').default()
+  const homeHtml = renderToStaticMarkup(home)
+  assert.ok(!/href="\/(loja|blog)/.test(homeHtml)); assert.ok(homeHtml.includes('wa.me'))
+})
+
+test('sitemap omits disabled sources without touching commercial/blog models', async () => {
+  reset(); configOverride = { store: { enabled: false }, blog: false, portfolio: true, services: true, pwa: true }
+  contentOverride = { portfolioEntries: [{ slug: 'synthetic-project', title: 'Test' }], serviceEntries: [{ slug: 'synthetic-service', title: 'Test' }] }
+  db.customPage = { findMany: async () => [{ slug: 'sobre' }] }
+  const sitemap = await load('src/app/sitemap.ts').default()
+  const urls = sitemap.map(entry => entry.url)
+  assert.ok(urls.some(url => url.endsWith('/portfolio/synthetic-project')))
+  assert.ok(urls.some(url => url.endsWith('/servicos/synthetic-service')))
+  assert.ok(!urls.some(url => /\/(loja|blog|pedido|carrinho|checkout|offline)/.test(url)))
+})
+
+test('active sitemap includes dynamic published posts/catalog but excludes operational URLs', async () => {
+  reset(); db = { customPage: { findMany: async () => [] }, product: { findMany: async () => [{ slug: 'synthetic-product' }] },
+    category: { findMany: async () => [] }, post: { findMany: async ({ where }) => { assert.equal(where.published, true); return [{ slug: 'synthetic-post' }] } }, blogCategory: { findMany: async () => [] } }
+  const urls = (await load('src/app/sitemap.ts').default()).map(entry => entry.url)
+  assert.ok(urls.some(url => url.endsWith('/loja/produto/synthetic-product')))
+  assert.ok(urls.some(url => url.endsWith('/blog/synthetic-post')))
+  assert.ok(!urls.some(url => /\/(pedido|checkout|carrinho|meus-pedidos)/.test(url)))
+})
+
+test('portfolio/services are real optional routes with client-owned content', async () => {
+  reset(); configOverride = { store: { enabled: false }, blog: false, portfolio: false, services: false, pwa: false }
+  assert.throws(() => load('src/app/(site)/portfolio/page.tsx').default(), /NEXT_NOT_FOUND/)
+  assert.throws(() => load('src/app/(site)/servicos/page.tsx').default(), /NEXT_NOT_FOUND/)
+  reset(); configOverride = { store: { enabled: false }, blog: false, portfolio: true, services: true, pwa: false }
+  contentOverride = { portfolioEntries: [{ slug: 'example', title: 'Synthetic', description: 'Test', content: 'Test' }], serviceEntries: [] }
+  assert.ok(load('src/app/(site)/portfolio/page.tsx').default())
+  assert.ok(await load('src/app/(site)/portfolio/[slug]/page.tsx').default({ params: Promise.resolve({ slug: 'example' }) }))
+  await assert.rejects(load('src/app/(site)/servicos/[slug]/page.tsx').default({ params: Promise.resolve({ slug: 'missing' }) }), /NEXT_NOT_FOUND/)
+})
+
+test('PWA manifest respects enabled state; cache accepts only neutral offline fallback', () => {
+  reset(); configOverride = { store: { enabled: false }, blog: false, portfolio: false, services: false, pwa: false }
+  assert.throws(() => load('src/app/manifest.ts').default(), /NEXT_NOT_FOUND/)
+  reset(); configOverride = { store: { enabled: false }, blog: false, portfolio: false, services: false, pwa: true }
+  const manifest = load('src/app/manifest.ts').default()
+  assert.equal(manifest.start_url, '/'); assert.ok(!JSON.stringify(manifest).includes('/loja'))
+  const { canCachePublicDocument } = load('src/core/lib/module-config.ts')
+  assert.equal(canCachePublicDocument(configOverride, '/offline'), true)
+  for (const route of ['/loja', '/api/orders', '/admin', '/loja/checkout', '/pedido/test', '/blog', '/offline?secret=test']) assert.equal(canCachePublicDocument(configOverride, route), false)
+})
+
+test('service worker bypasses commerce, APIs and external origins; disabled mode retires registration', async () => {
+  reset(); const source = load('src/core/pwa/worker.ts').workerSource
+  const config = { store: { enabled: true, checkout: true }, blog: true, portfolio: false, services: false, pwa: true }
+  const handlers = {}, self = { location: { origin: 'https://shop.example.invalid' }, addEventListener: (name, fn) => { handlers[name] = fn }, registration: { unregister: async () => true } }
+  vm.runInNewContext(source(config), { self, URL, Response })
+  for (const url of ['/loja', '/loja/pedido/test', '/api/orders', '/admin', '/pedido/test']) handlers.fetch({ request: { url: self.location.origin + url, method: 'GET', mode: 'navigate' }, respondWith: () => assert.fail('Private route intercepted') })
+  const offHandlers = {}; let retired = false, deleted = []
+  vm.runInNewContext(source({ ...config, pwa: false }), { self: { ...self, addEventListener: (name, fn) => { offHandlers[name] = fn }, registration: { unregister: async () => { retired = true } } },
+    caches: { keys: async () => ['upnode-pwa-old', 'other-app'], delete: async key => { deleted.push(key) } }, URL, Response })
+  assert.equal(offHandlers.fetch, undefined)
+  let activated; offHandlers.activate({ waitUntil: promise => { activated = promise } }); await activated
+  assert.equal(retired, true); assert.deepEqual(deleted, ['upnode-pwa-old'])
 })

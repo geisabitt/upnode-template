@@ -1,5 +1,6 @@
 // src/components/FreteCalculator.tsx
 'use client'
+import { isModuleEnabled } from '@/core/lib/modules'
 
 import { useState } from 'react'
 import { toast } from 'react-hot-toast'
@@ -60,6 +61,7 @@ export default function FreteCalculator({ quantidade }: Props) {
     }
   }
 
+  if (!isModuleEnabled('checkout')) return null
   return (
     <div className="mt-6 border border-[var(--color-border)] bg-[var(--color-bg-card)] p-4 rounded-md">
       <h3 className="text-lg font-medium text-[var(--color-text-primary)] mb-2">Calcular Frete</h3>

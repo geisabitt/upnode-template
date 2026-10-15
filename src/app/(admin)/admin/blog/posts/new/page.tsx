@@ -1,3 +1,4 @@
+import { requireModule } from '@/core/lib/module-server'
 import { requireAdminPage } from '@/core/lib/admin-access'
 // src/app/(admin)/admin/posts/new/page.tsx
 
@@ -5,6 +6,7 @@ import { prisma } from '@/core/lib/prisma'
 import PostForm from '@/core/components/admin/PostForm'
 
 export default async function NewPostPage() {
+  requireModule('blog')
   await requireAdminPage()
 
   const categories = await prisma.blogCategory.findMany({

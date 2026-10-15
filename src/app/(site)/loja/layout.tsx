@@ -1,3 +1,4 @@
+import { requireModule } from '@/core/lib/module-server'
 import CategoriasMenu from "@/core/components/CategoriasMenu";
 
 export default function LojaLayout({
@@ -5,6 +6,8 @@ export default function LojaLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  requireModule('store')
+
   return (
     <div>
       <CategoriasMenu />

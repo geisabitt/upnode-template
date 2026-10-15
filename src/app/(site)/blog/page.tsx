@@ -1,8 +1,11 @@
+import { requireModule } from '@/core/lib/module-server'
 import { prisma } from '@/core/lib/prisma'
 import Link from 'next/link'
 import Image from 'next/image'
 
 export default async function BlogPage() {
+  requireModule('blog')
+
   const posts = await prisma.post.findMany({
     where: { published: true },
     orderBy: { createdAt: 'desc' },

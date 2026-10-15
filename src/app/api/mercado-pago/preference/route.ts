@@ -1,9 +1,10 @@
+import { withModuleApi } from '@/core/lib/module-server'
 import { NextRequest } from 'next/server'
 import { prisma } from '@/core/lib/prisma'
 import { canAccessOrder } from '@/core/lib/order-access'
 import { mutationGuard, privateJson } from '@/core/lib/request-security'
 import { cents, payableTotal } from '@/core/lib/commerce-security'
-export async function POST(req: NextRequest) {
+async function POST(req: NextRequest) {
   const guard = mutationGuard(req, 'mp-preference')
   if (guard) return guard
   const body = await req.json().catch(() => null)
@@ -29,3 +30,6 @@ export async function POST(req: NextRequest) {
     return privateJson({ init_point: data.init_point, id: data.id })
   } catch { return privateJson({ error: 'Não foi possível iniciar o pagamento.' }, 502) }
 }
+
+const modulePOST = withModuleApi('/api/mercado-pago/preference', POST)
+export { modulePOST as POST }

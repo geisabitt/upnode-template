@@ -1,3 +1,4 @@
+import { withModuleApi } from '@/core/lib/module-server'
 import { checkoutSchema } from '@/core/lib/validators/checkoutSchema'
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/core/lib/prisma'
@@ -8,7 +9,7 @@ import { mutationGuard, privateJson } from '@/core/lib/request-security'
 import { verifyShippingQuote } from '@/core/lib/commerce-security'
 import { ValidationError } from 'yup'
 
-export const GET = withAdmin(async function GET() {
+const GET = withAdmin(async function GET() {
   const orders = await prisma.order.findMany({ include: { items: true }, orderBy: { createdAt: 'desc' } })
   return privateJson(orders)
 })
@@ -20,7 +21,7 @@ function validItem(item: CartItem): boolean {
     typeof item.size?.name === 'string' && typeof item.color?.name === 'string'
 }
 
-export async function POST(req: NextRequest) {
+async function POST(req: NextRequest) {
   const guard = mutationGuard(req, 'checkout')
   if (guard) return guard
   if (!process.env.AUTH_JWT_SECRET) return privateJson({ error: 'Checkout indisponível.' }, 503)
@@ -67,3 +68,9 @@ export async function POST(req: NextRequest) {
     return privateJson({ error: 'Não foi possível criar o pedido. Revise os itens e recalcule o frete.' }, 400)
   }
 }
+
+const moduleGET = withModuleApi('/api/orders', GET)
+export { moduleGET as GET }
+
+const modulePOST = withModuleApi('/api/orders', POST)
+export { modulePOST as POST }

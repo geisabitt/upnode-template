@@ -1,3 +1,4 @@
+import { requireModule } from '@/core/lib/module-server'
 import Link from 'next/link'
 import { prisma } from '@/core/lib/prisma'
 import Image from 'next/image'
@@ -16,6 +17,8 @@ async function getProducts() {
 } 
 
 export default async function LojaPage() {
+  requireModule('store')
+
   const products = await getProducts()
 
   if (!products.length) {

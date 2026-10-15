@@ -1,3 +1,4 @@
+import { withModuleApi } from '@/core/lib/module-server'
 import { withAdmin } from '@/core/lib/admin-access'
 /**
  * Validates Asaas API key by making a simple test request
@@ -38,4 +39,7 @@ async function GET(request: Request) {
 }
 
 const securedGET = withAdmin(GET)
-export { securedGET as GET }
+
+
+const moduleGET = withModuleApi('/api/asaas/validate-key', securedGET)
+export { moduleGET as GET }

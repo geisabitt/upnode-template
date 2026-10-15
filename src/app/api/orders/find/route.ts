@@ -1,9 +1,10 @@
+import { withModuleApi } from '@/core/lib/module-server'
 import { mutationGuard, privateJson } from '@/core/lib/request-security'
 import { canAccessOrder, grantOrderAccess } from '@/core/lib/order-access'
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/core/lib/prisma'
 
-export async function GET(req: NextRequest) {
+async function GET(req: NextRequest) {
 
   const { searchParams } = new URL(req.url)
   const orderId = searchParams.get('orderId')
@@ -32,7 +33,7 @@ export async function GET(req: NextRequest) {
   }
 }
 
-export async function POST(req: Request) {
+async function POST(req: Request) {
   const guard = mutationGuard(req, 'order-lookup')
   if (guard) return guard
   if (!process.env.AUTH_JWT_SECRET) return privateJson({ message: 'Consulta indisponível.' }, 503)
@@ -67,3 +68,9 @@ export async function POST(req: Request) {
     return NextResponse.json({ message: 'Erro ao buscar pedidos' }, { status: 500 })
   }
 }
+
+const moduleGET = withModuleApi('/api/orders/find', GET)
+export { moduleGET as GET }
+
+const modulePOST = withModuleApi('/api/orders/find', POST)
+export { modulePOST as POST }

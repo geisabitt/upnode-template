@@ -1,8 +1,9 @@
+import { withModuleApi } from '@/core/lib/module-server'
 import { withAdmin } from '@/core/lib/admin-access'
 import { NextResponse } from 'next/server'
 import { uploadFilesToCloudinary } from '@/core/lib/cloudinary'
 
-export const POST = withAdmin(async function POST(request: Request) {
+const POST = withAdmin(async function POST(request: Request) {
   const formData = await request.formData()
   const files = formData.getAll('files') as Array<File | string>
 
@@ -29,3 +30,6 @@ export const POST = withAdmin(async function POST(request: Request) {
     return NextResponse.json({ error: 'Falha ao enviar imagens para o Cloudinary.' }, { status: 500 })
   }
 })
+
+const modulePOST = withModuleApi('/api/cloudinary/upload', POST)
+export { modulePOST as POST }

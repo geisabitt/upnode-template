@@ -1,3 +1,4 @@
+import { requireModule } from '@/core/lib/module-server'
 // app/loja/categoria/[slug]/page.tsx
 import Link from 'next/link'
 import Image from 'next/image'
@@ -61,6 +62,8 @@ async function getProdutosByCategoriaSlug(
 }
 
 export default async function CategoriaPage({ params }: CategoriaPageProps) {
+  requireModule('store')
+
   const { slug } = await params
 
   const { produtos, categoriaNome } = await getProdutosByCategoriaSlug(slug)

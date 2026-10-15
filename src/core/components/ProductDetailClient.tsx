@@ -1,4 +1,5 @@
 'use client'
+import { isModuleEnabled } from '@/core/lib/modules'
 
 import { useState } from 'react'
 import { useCart } from '@/core/context/CartContext'
@@ -166,7 +167,7 @@ export default function ProductDetailClient({ product }: { product: ProductDetai
         </div>
 
         {/* BOTÃO */}
-        <button
+        {isModuleEnabled('checkout') && (<button
           onClick={() => {
             if (product.colors.length > 0 && !selectedColor) {
               toast.error('Selecione uma cor antes de adicionar ao carrinho.')
@@ -194,7 +195,7 @@ export default function ProductDetailClient({ product }: { product: ProductDetai
           className="mt-4 bg-green-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-green-700 transition"
         >
           Adicionar ao carrinho
-        </button>
+        </button>)}
       </div>
     </div>
   )

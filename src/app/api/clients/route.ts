@@ -1,3 +1,4 @@
+import { withModuleApi } from '@/core/lib/module-server'
 import { withAdmin } from '@/core/lib/admin-access'
 // src/app/api/clients/route.ts
 // Cria o DONO DA LOJA como subconta no Asaas e salva no banco (model Client)
@@ -84,4 +85,10 @@ async function POST(req: Request) {
 
 const securedGET = withAdmin(GET)
 const securedPOST = withAdmin(POST)
-export { securedGET as GET, securedPOST as POST }
+
+
+const moduleGET = withModuleApi('/api/clients', securedGET)
+export { moduleGET as GET }
+
+const modulePOST = withModuleApi('/api/clients', securedPOST)
+export { modulePOST as POST }

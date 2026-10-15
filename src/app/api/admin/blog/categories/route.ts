@@ -1,9 +1,10 @@
+import { withModuleApi } from '@/core/lib/module-server'
 import { withAdmin } from '@/core/lib/admin-access'
 // src/app/api/admin/blog-categories/route.ts
 import { NextResponse } from 'next/server'
 import { prisma } from '@/core/lib/prisma'
 
-export const GET = withAdmin(async function GET() {
+const GET = withAdmin(async function GET() {
   const categories = await prisma.blogCategory.findMany({
     orderBy: [
   { order: 'asc' },
@@ -14,7 +15,7 @@ export const GET = withAdmin(async function GET() {
   return NextResponse.json(categories)
 })
 
-export const POST = withAdmin(async function POST(req: Request) {
+const POST = withAdmin(async function POST(req: Request) {
   const body = await req.json()
 
   const {
@@ -45,3 +46,8 @@ export const POST = withAdmin(async function POST(req: Request) {
 
   return NextResponse.json(category)
 })
+const moduleGET = withModuleApi('/api/admin/blog/categories', GET)
+export { moduleGET as GET }
+
+const modulePOST = withModuleApi('/api/admin/blog/categories', POST)
+export { modulePOST as POST }

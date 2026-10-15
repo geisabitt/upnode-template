@@ -1,8 +1,9 @@
+import { withModuleApi } from '@/core/lib/module-server'
 import { withAdmin } from '@/core/lib/admin-access'
 import { NextResponse } from 'next/server'
 import { prisma } from '@/core/lib/prisma'
 
-export const GET = withAdmin(async function GET() {
+const GET = withAdmin(async function GET() {
   const posts = await prisma.post.findMany({
     include: {
       category: true,
@@ -13,7 +14,7 @@ export const GET = withAdmin(async function GET() {
   return NextResponse.json(posts)
 })
 
-export const POST = withAdmin(async function POST(req: Request) {
+const POST = withAdmin(async function POST(req: Request) {
   const body = await req.json()
 
   const {
@@ -51,3 +52,8 @@ export const POST = withAdmin(async function POST(req: Request) {
 
   return NextResponse.json(post)
 })
+const moduleGET = withModuleApi('/api/admin/blog/posts', GET)
+export { moduleGET as GET }
+
+const modulePOST = withModuleApi('/api/admin/blog/posts', POST)
+export { modulePOST as POST }

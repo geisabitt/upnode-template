@@ -1,9 +1,10 @@
+import { withModuleApi } from '@/core/lib/module-server'
 import { withAdmin } from '@/core/lib/admin-access'
 import { NextResponse } from 'next/server'
 import { Prisma } from '@/generated/client'
 import { prisma } from '@/core/lib/prisma'
 
-export const GET = withAdmin(async function GET(request: Request) {
+const GET = withAdmin(async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
   const page = Number(searchParams.get('page') || '1')
   const perPage = Number(searchParams.get('perPage') || '10')
@@ -36,7 +37,7 @@ type AdminProductCreateRequest = {
   sizes?: { name: string }[]
 }
 
-export const POST = withAdmin(async function POST(request: Request) {
+const POST = withAdmin(async function POST(request: Request) {
   const body = (await request.json()) as AdminProductCreateRequest
   const { name, slug, description, price, stock, materials, handmade, categories, youtubeUrl, imageUrls, colors, sizes } = body
 
@@ -100,3 +101,9 @@ export const POST = withAdmin(async function POST(request: Request) {
   }
 })
 
+
+const moduleGET = withModuleApi('/api/admin/products', GET)
+export { moduleGET as GET }
+
+const modulePOST = withModuleApi('/api/admin/products', POST)
+export { modulePOST as POST }

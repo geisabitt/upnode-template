@@ -1,7 +1,8 @@
+import { withModuleApi } from '@/core/lib/module-server'
 import { withAdmin } from '@/core/lib/admin-access'
 import { prisma } from "@/core/lib/prisma"
 
-export const PATCH = withAdmin(async function PATCH(
+const PATCH = withAdmin(async function PATCH(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
@@ -22,3 +23,5 @@ export const PATCH = withAdmin(async function PATCH(
 
   return Response.json(page)
 })
+const modulePATCH = withModuleApi('/api/admin/pages/[id]', PATCH)
+export { modulePATCH as PATCH }

@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic'
 // src/app/(site)/page.tsx
 import HomePage from '@/client/home/HomePage'
 

@@ -1,3 +1,4 @@
+import { withModuleApi } from '@/core/lib/module-server'
 import { mutationGuard, privateJson } from '@/core/lib/request-security'
 import { signShippingQuote } from '@/core/lib/commerce-security'
 // src/app/api/frete/route.ts
@@ -11,7 +12,7 @@ interface MelhorEnvioResponse {
   error?: string
 }
 
-export async function POST(request: Request) {
+async function POST(request: Request) {
   const guard = mutationGuard(request, 'shipping')
   if (guard) return guard
   if (!process.env.AUTH_JWT_SECRET || !process.env.MELHOR_ENVIO_TOKEN) return privateJson({ error: 'Frete indisponível.' }, 503)
@@ -79,3 +80,5 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Erro interno' }, { status: 500 })
   }
 }
+const modulePOST = withModuleApi('/api/frete', POST)
+export { modulePOST as POST }

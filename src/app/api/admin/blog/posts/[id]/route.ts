@@ -1,15 +1,16 @@
+import { withModuleApi } from '@/core/lib/module-server'
 import { withAdmin } from '@/core/lib/admin-access'
 import { NextResponse } from 'next/server'
 import { prisma } from '@/core/lib/prisma'
 
 type Params = {
-  params: { id: string } | Promise<{ id: string }>
+  params: Promise<{ id: string }>
 }
 
 /* =========================
    UPDATE (PATCH)
 ========================= */
-export const PATCH = withAdmin(async function PATCH(req: Request, context: Params) {
+const PATCH = withAdmin(async function PATCH(req: Request, context: Params) {
   try {
     const { id } = await context.params
     const body = await req.json()
@@ -47,7 +48,7 @@ export const PATCH = withAdmin(async function PATCH(req: Request, context: Param
 /* =========================
    DELETE
 ========================= */
-export const DELETE = withAdmin(async function DELETE(req: Request, context: Params) {
+const DELETE = withAdmin(async function DELETE(req: Request, context: Params) {
   try {
     const { id } = await context.params
 
@@ -72,3 +73,8 @@ export const DELETE = withAdmin(async function DELETE(req: Request, context: Par
     )
   }
 })
+const modulePATCH = withModuleApi('/api/admin/blog/posts/[id]', PATCH)
+export { modulePATCH as PATCH }
+
+const moduleDELETE = withModuleApi('/api/admin/blog/posts/[id]', DELETE)
+export { moduleDELETE as DELETE }

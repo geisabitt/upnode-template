@@ -1,3 +1,4 @@
+import { isPublicLinkEnabled, isModuleEnabled } from '@/core/lib/modules'
 // src/client/home/HomePage.tsx
 import Image from "next/image";
 import Link from "next/link";
@@ -5,11 +6,11 @@ import { prisma } from "@/core/lib/prisma";
 import { siteConfig } from "@/client/config/site.config"; // ← import que faltava
 
 export default async function HomePage() {
-  const categories = await prisma.blogCategory.findMany({
+  const categories = isModuleEnabled('blog') ? await prisma.blogCategory.findMany({
     where: { showOnHome: true },
     orderBy: { order: "asc" },
     take: 3,
-  });
+  }) : [];
 
   return (
     <main className="w-full" style={{ backgroundColor: 'var(--color-bg-primary)', color: 'var(--color-text-primary)' }}>
@@ -35,13 +36,13 @@ export default async function HomePage() {
               para aparecer no Google e converter visitantes em clientes.
             </p>
             <div className="flex flex-wrap gap-4">
-              <a
+              {isPublicLinkEnabled("/loja") && (<a
                 href="/loja"
                 className="inline-block px-6 py-3 font-semibold transition rounded-lg hover:opacity-80"
                 style={{ backgroundColor: 'var(--color-accent)', color: 'var(--color-text-light)' }}
               >
                 Ver planos
-              </a>
+              </a>)}
               <a
                 href="/personalizado"
                 className="inline-block px-6 py-3 transition rounded-lg hover:opacity-80"

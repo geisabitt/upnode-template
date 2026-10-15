@@ -1,4 +1,5 @@
 'use client'
+import { isModuleEnabled } from '@/core/lib/modules'
 import { useRouter } from 'next/navigation'
 
 interface PagarNovamenteButtonProps {
@@ -12,6 +13,7 @@ export function PagarNovamenteButton({ orderId }: PagarNovamenteButtonProps) {
     router.push(`/loja/pedido/${orderId}/pagamento`)
   }
 
+  if (!isModuleEnabled('checkout')) return null
   return (
     <button
       className="mt-4 bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] text-[var(--color-bg-primary)] px-4 py-2 rounded-lg font-medium transition duration-200"

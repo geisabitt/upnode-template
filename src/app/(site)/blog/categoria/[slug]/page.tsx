@@ -1,3 +1,4 @@
+import { requireModule } from '@/core/lib/module-server'
 import { prisma } from '@/core/lib/prisma'
 import Link from 'next/link'
 import Image from 'next/image'
@@ -9,6 +10,8 @@ type Props = {
 }
 
 export default async function CategoriaPage({ params }: Props) {
+  requireModule('blog')
+
   const { slug } = await params
 
   const category = await prisma.blogCategory.findUnique({

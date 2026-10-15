@@ -1,3 +1,4 @@
+import { requireModule } from '@/core/lib/module-server'
 import Link from 'next/link'
 import ProductDetailClient, { ProductDetailClientProps } from '@/core/components/ProductDetailClient'
 import prisma from '@/core/lib/prisma'
@@ -7,6 +8,8 @@ type ProdutoPageProps = {
 }
 
 export default async function ProdutoPage({ params }: ProdutoPageProps) {
+  requireModule('store')
+
   const { slug } = await params
 
   const product = await prisma.product.findUnique({

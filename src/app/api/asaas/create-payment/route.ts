@@ -1,3 +1,4 @@
+import { withModuleApi } from '@/core/lib/module-server'
 import { prisma } from '@/core/lib/prisma'
 import { canAccessOrder } from '@/core/lib/order-access'
 import { mutationGuard, privateJson } from '@/core/lib/request-security'
@@ -46,7 +47,7 @@ const createPaymentSchema = yup.object({
 
 type CreatePaymentRequest = yup.InferType<typeof createPaymentSchema>;
 
-export async function POST(req: NextRequest) {
+async function POST(req: NextRequest) {
   const guard = mutationGuard(req, 'asaas-payment')
   if (guard) return guard
   try {
@@ -183,3 +184,5 @@ function formatDate(date: Date): string {
   const day = String(date.getDate()).padStart(2, '0');
   return `${year}-${month}-${day}`;
 }
+const modulePOST = withModuleApi('/api/asaas/create-payment', POST)
+export { modulePOST as POST }

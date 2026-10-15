@@ -1,3 +1,4 @@
+import { withModuleApi } from '@/core/lib/module-server'
 import { withAdmin } from '@/core/lib/admin-access'
 // src/app/api/products/route.ts
 import { prisma } from '@/core/lib/prisma'
@@ -22,7 +23,7 @@ type CreateProductRequest = {
   sizes?: SizeInput[]
 }
 
-export const POST = withAdmin(async function POST(req: Request) {
+const POST = withAdmin(async function POST(req: Request) {
   const body = (await req.json()) as CreateProductRequest
   const { name, slug, price, imageUrl, description, colors, sizes } = body
 
@@ -67,7 +68,7 @@ export const POST = withAdmin(async function POST(req: Request) {
   }
 })
 
-export async function GET() {
+async function GET() {
   try {
     const products = await prisma.product.findMany({
       include: {
@@ -85,3 +86,9 @@ export async function GET() {
     return NextResponse.json({ error: 'Erro ao buscar produtos' }, { status: 500 })
   }
 }
+
+const modulePOST = withModuleApi('/api/products', POST)
+export { modulePOST as POST }
+
+const moduleGET = withModuleApi('/api/products', GET)
+export { moduleGET as GET }

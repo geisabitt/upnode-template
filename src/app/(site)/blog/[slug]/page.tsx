@@ -1,3 +1,4 @@
+import { requireModule } from '@/core/lib/module-server'
 import { prisma } from '@/core/lib/prisma'
 import { notFound } from 'next/navigation'
 import { Metadata } from 'next'
@@ -8,6 +9,8 @@ interface PageProps {
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  requireModule('blog')
+
   const { slug } = await params
   const post = await prisma.post.findFirst({
     where: { slug, published: true },
@@ -36,6 +39,8 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 }
 
 export default async function BlogPostPage({ params }: PageProps) {
+  requireModule('blog')
+
   const { slug } = await params
   const post = await prisma.post.findFirst({
     where: { slug, published: true },

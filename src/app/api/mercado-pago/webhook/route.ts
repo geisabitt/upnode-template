@@ -1,9 +1,10 @@
+import { withModuleApi } from '@/core/lib/module-server'
 import { NextRequest } from 'next/server'
 import { verifyMercadoPagoWebhook } from '@/core/lib/commerce-security'
 import { fetchMercadoPagoPayment } from '@/core/lib/mercado-pago-security'
 import { applyVerifiedPayment } from '@/core/lib/payment-security'
 import { privateJson } from '@/core/lib/request-security'
-export async function POST(req: NextRequest) {
+async function POST(req: NextRequest) {
   const secret = process.env.MERCADO_PAGO_WEBHOOK_SECRET
   const token = process.env.MERCADO_PAGO_ACCESS_TOKEN
   if (!secret || !token) return privateJson({ error: 'Webhook não configurado.' }, 503)
@@ -23,3 +24,6 @@ export async function POST(req: NextRequest) {
     return privateJson({ success: true })
   } catch { return privateJson({ error: 'Não foi possível confirmar a notificação.' }, 503) }
 }
+
+const modulePOST = withModuleApi('/api/mercado-pago/webhook', POST)
+export { modulePOST as POST }

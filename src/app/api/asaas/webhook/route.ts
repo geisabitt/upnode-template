@@ -1,10 +1,11 @@
+import { withModuleApi } from '@/core/lib/module-server'
 import { NextRequest } from 'next/server'
 import { asaasFetch, type AsaasPayment } from '@/core/lib/asaas'
 import { safeEqual, normalizedAsaasStatus } from '@/core/lib/commerce-security'
 import { applyVerifiedPayment } from '@/core/lib/payment-security'
 import { privateJson } from '@/core/lib/request-security'
 export const runtime = 'nodejs'
-export async function POST(req: NextRequest) {
+async function POST(req: NextRequest) {
   const secret = process.env.ASAAS_WEBHOOK_TOKEN
   if (!secret) return privateJson({ error: 'Webhook não configurado.' }, 503)
   if (!safeEqual(req.headers.get('asaas-access-token') || '', secret)) return privateJson({ error: 'Notificação não autorizada.' }, 401)
@@ -22,3 +23,6 @@ export async function POST(req: NextRequest) {
     return privateJson({ success: true })
   } catch { return privateJson({ error: 'Não foi possível confirmar a notificação.' }, 503) }
 }
+
+const modulePOST = withModuleApi('/api/asaas/webhook', POST)
+export { modulePOST as POST }

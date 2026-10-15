@@ -1,13 +1,17 @@
+export const dynamic = 'force-dynamic'
 // src/app/(site)/layout.tsx
 import type { Metadata, Viewport } from "next";
 import "@/app/globals.css";
 import { CartProvider } from '@/core/context/CartContext';
 import { Toaster } from "react-hot-toast";
 import { siteConfig } from "@/client/config/site.config";
+import { isModuleEnabled } from '@/core/lib/modules'
+import PwaProvider from '@/core/pwa/PwaProvider'
 import Header from "@/client/components/Header";
 import Footer from "@/client/components/Footer";
 
 export const metadata: Metadata = {
+  manifest: isModuleEnabled('pwa') ? '/manifest.webmanifest' : undefined,
   metadataBase: new URL(siteConfig.seo.url),
   title: siteConfig.seo.titulo,               
   description: siteConfig.seo.descricao,       
@@ -88,6 +92,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
           color: 'var(--color-text-primary)',
         }}
       >
+        <PwaProvider enabled={isModuleEnabled('pwa')} />
         <Toaster position="top-right" reverseOrder={false} />
         <CartProvider>
           <div className="flex flex-col min-h-screen">

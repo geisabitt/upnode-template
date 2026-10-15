@@ -1,9 +1,10 @@
+import { withModuleApi } from '@/core/lib/module-server'
 import { withAdmin } from '@/core/lib/admin-access'
 import { NextResponse } from 'next/server'
 import { Prisma } from '@/generated/client'
 import { prisma } from '@/core/lib/prisma'
 
-export const GET = withAdmin(async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
+const GET = withAdmin(async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
 
   const product = await prisma.product.findUnique({
@@ -34,7 +35,7 @@ type AdminProductUpdateRequest = {
   sizes?: { name: string }[]
 }
 
-export const PATCH = withAdmin(async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
+const PATCH = withAdmin(async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   const body = (await request.json()) as AdminProductUpdateRequest
 
@@ -145,7 +146,7 @@ export const PATCH = withAdmin(async function PATCH(request: Request, { params }
   }
 })
 
-export const DELETE = withAdmin(async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
+const DELETE = withAdmin(async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
 
   try {
@@ -156,3 +157,11 @@ export const DELETE = withAdmin(async function DELETE(request: Request, { params
     return NextResponse.json({ message: 'Erro interno ao excluir produto.' }, { status: 500 })
   }
 })
+const moduleGET = withModuleApi('/api/admin/products/[id]', GET)
+export { moduleGET as GET }
+
+const modulePATCH = withModuleApi('/api/admin/products/[id]', PATCH)
+export { modulePATCH as PATCH }
+
+const moduleDELETE = withModuleApi('/api/admin/products/[id]', DELETE)
+export { moduleDELETE as DELETE }

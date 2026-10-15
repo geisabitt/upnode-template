@@ -1,3 +1,4 @@
+import { withModuleApi } from '@/core/lib/module-server'
 import { NextRequest } from 'next/server'
 import { asaasFetch, type AsaasPayment, type AsaasPixQrCode } from '@/core/lib/asaas'
 import { canAccessOrder, hasOrderAccess } from '@/core/lib/order-access'
@@ -5,7 +6,7 @@ import { prisma } from '@/core/lib/prisma'
 import { payableTotal, cents } from '@/core/lib/commerce-security'
 import { mutationGuard, privateJson } from '@/core/lib/request-security'
 export const runtime = 'nodejs'
-export async function GET(req: NextRequest) {
+async function GET(req: NextRequest) {
   const guard = mutationGuard(req, 'pix-query')
   if (guard) return guard
   const paymentId = req.nextUrl.searchParams.get('paymentId')
@@ -21,3 +22,6 @@ export async function GET(req: NextRequest) {
     return privateJson({ success: true, ...qrCode })
   } catch { return privateJson({ error: 'Não foi possível consultar o PIX.' }, 502) }
 }
+
+const moduleGET = withModuleApi('/api/asaas/pix-qrcode', GET)
+export { moduleGET as GET }
