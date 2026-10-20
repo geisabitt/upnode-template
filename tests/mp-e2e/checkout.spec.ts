@@ -2,6 +2,8 @@ import { test, expect } from '@playwright/test'
 import { createHmac, randomUUID } from 'node:crypto'
 import jwt from 'jsonwebtoken'
 import pg from 'pg'
+// Keep provider mocks deterministic: service workers bypass Playwright route interception.
+test.use({ serviceWorkers: 'block' })
 test.setTimeout(900000)
 const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL })
 test.afterAll(() => pool.end())

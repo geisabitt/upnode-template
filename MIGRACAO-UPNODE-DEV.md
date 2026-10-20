@@ -67,3 +67,5 @@ Build local aprovado; 37 testes de segurança, 10 testes com PostgreSQL isolado,
 Nenhum banco externo migrado; nenhuma cobrança externa executada. Migrações aditivas pendentes de confirmação do banco DEV. Configuração segura da aplicação comum, callbacks, roteamento de webhooks e conexão individual de lojista pendentes. Testes publicados reservados para após o retorno do responsável.
 
 Destino remoto DEV confirmado pelo responsável: origin/develop; manter branch local desenvolvimento.
+
+Validação complementar: cenário completo de checkout aprovado novamente sobre o índice Git. Use --index no executor para validar somente os arquivos preparados para commit, excluindo alterações locais anteriores. O cenário com SDK simulado bloqueia service workers para que as interceptações Playwright sejam determinísticas; isso não altera a configuração PWA publicada.
