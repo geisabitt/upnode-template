@@ -68,6 +68,7 @@ async function POST(req: NextRequest) {
     if (!await canAccessOrder(validatedData.orderId)) return privateJson({ error: 'Pedido não encontrado.' }, 404)
     const order = await prisma.order.findUnique({ where: { id: validatedData.orderId } })
     if (!order || !order.customerId) return privateJson({ error: 'Pagador não cadastrado.' }, 400)
+    if (order.paymentProvider === 'mercado_pago') return privateJson({ error: 'Provedor divergente.' }, 409)
     if (['approved', 'refunded', 'refund_pending', 'disputed'].includes(order.statusPagamento || '')) return privateJson({ error: 'Pedido já liquidado.' }, 409)
     const total = payableTotal(order)
 

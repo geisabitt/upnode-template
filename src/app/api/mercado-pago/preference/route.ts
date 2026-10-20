@@ -15,6 +15,7 @@ async function POST(req: NextRequest) {
   try {
     const order = await prisma.order.findUnique({ where: { id: body.orderId }, include: { items: true } })
     if (!order) return privateJson({ error: 'Pedido não encontrado.' }, 404)
+    if (order.paymentProvider === 'mercado_pago') return privateJson({ error: 'Utilize o checkout transparente deste pedido.' }, 409)
     if (['approved', 'refunded', 'refund_pending', 'disputed'].includes(order.statusPagamento || '')) return privateJson({ error: 'Pedido já liquidado.' }, 409)
     const subtotal = order.items.reduce((sum, item) => sum + cents(item.price) * item.quantity, 0)
     if (subtotal !== cents(order.total) || cents(payableTotal(order)) !== subtotal + cents(order.frete || 0)) return privateJson({ error: 'Pedido inconsistente.' }, 409)

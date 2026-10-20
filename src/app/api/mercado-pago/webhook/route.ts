@@ -1,3 +1,6 @@
+export const runtime = 'nodejs'
+export const maxDuration = 90
+import { acceptWebhook } from '@/core/lib/mp/webhooks'
 import { withModuleApi } from '@/core/lib/module-server'
 import { NextRequest } from 'next/server'
 import { verifyMercadoPagoWebhook } from '@/core/lib/commerce-security'
@@ -5,6 +8,10 @@ import { fetchMercadoPagoPayment } from '@/core/lib/mercado-pago-security'
 import { applyVerifiedPayment } from '@/core/lib/payment-security'
 import { privateJson } from '@/core/lib/request-security'
 async function POST(req: NextRequest) {
+  const notification = await req.clone().json().catch(() => null)
+  if (notification?.type === 'order') {
+    try { return await acceptWebhook(req) } catch { return privateJson({ error: 'Notificação pendente de recuperação.' }, 503) }
+  }
   const secret = process.env.MERCADO_PAGO_WEBHOOK_SECRET
   const token = process.env.MERCADO_PAGO_ACCESS_TOKEN
   if (!secret || !token) return privateJson({ error: 'Webhook não configurado.' }, 503)

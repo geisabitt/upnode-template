@@ -1,4 +1,5 @@
 'use client'
+import MercadoPagoPayment from '@/core/components/payment/MercadoPagoPayment'
 
 import { useParams } from 'next/navigation'
 import { useRouter } from 'next/navigation'
@@ -10,6 +11,7 @@ import PixPayment from '@/core/components/payment/PixPayment'
 import { Loader2 } from 'lucide-react'
 
 interface Order {
+  paymentProvider?: string
   id: string
   total: number
   frete: number
@@ -234,6 +236,7 @@ export default function PagamentoPage() {
           <div className="rounded-3xl border border-[var(--color-border)] bg-[var(--color-bg-card)] p-6">
             <h1 className="text-2xl font-bold mb-6">Pagamento do Pedido</h1>
 
+            {order.paymentProvider === 'mercado_pago' ? <MercadoPagoPayment orderId={order.id} total={Number(order.total) + Number(order.frete)} email={order.email} /> : <>
             {/* SELETOR DE MÉTODO */}
             <PaymentMethodSelector
               selectedMethod={paymentMethod}
@@ -268,6 +271,7 @@ export default function PagamentoPage() {
                 />
               )}
             </div>
+            </>}
           </div>
         </div>
 
