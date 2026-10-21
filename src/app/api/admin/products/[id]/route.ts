@@ -1,8 +1,10 @@
+import { withModuleApi } from '@/core/lib/module-server'
+import { withAdmin } from '@/core/lib/admin-access'
 import { NextResponse } from 'next/server'
 import { Prisma } from '@/generated/client'
 import { prisma } from '@/core/lib/prisma'
 
-export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
+const GET = withAdmin(async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
 
   const product = await prisma.product.findUnique({
@@ -15,7 +17,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
   }
 
   return NextResponse.json(product)
-}
+})
 
 type AdminProductUpdateRequest = {
   name: string
@@ -33,7 +35,7 @@ type AdminProductUpdateRequest = {
   sizes?: { name: string }[]
 }
 
-export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
+const PATCH = withAdmin(async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   const body = (await request.json()) as AdminProductUpdateRequest
 
@@ -53,7 +55,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     sizes,
   } = body
 
-  if (!name || !slug || !description || typeof price !== 'number' || typeof stock !== 'number' || !Array.isArray(imageUrls)) {
+  if (!name || !slug || !description || typeof price !== 'number' || !Number.isFinite(price) || price <= 0 || typeof stock !== 'number' || !Number.isSafeInteger(stock) || stock < 0 || !Array.isArray(imageUrls)) {
     return NextResponse.json({ message: 'Dados do produto incompletos.' }, { status: 400 })
   }
 
@@ -142,9 +144,9 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 
     return NextResponse.json({ message: 'Erro interno ao atualizar produto.' }, { status: 500 })
   }
-}
+})
 
-export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
+const DELETE = withAdmin(async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
 
   try {
@@ -154,4 +156,12 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
     console.error('Erro ao excluir produto:', error)
     return NextResponse.json({ message: 'Erro interno ao excluir produto.' }, { status: 500 })
   }
-}
+})
+const moduleGET = withModuleApi('/api/admin/products/[id]', GET)
+export { moduleGET as GET }
+
+const modulePATCH = withModuleApi('/api/admin/products/[id]', PATCH)
+export { modulePATCH as PATCH }
+
+const moduleDELETE = withModuleApi('/api/admin/products/[id]', DELETE)
+export { moduleDELETE as DELETE }

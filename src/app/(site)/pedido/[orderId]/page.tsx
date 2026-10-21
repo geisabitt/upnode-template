@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useSearchParams } from 'next/navigation'
+import { useSearchParams, useParams } from 'next/navigation'
 import { useCart } from '@/core/context/CartContext'
 
 interface Order {
@@ -20,7 +20,8 @@ interface Order {
   }>
 }
 
-export default function PedidoPage({ params }: { params: { orderId: string } }) {
+export default function PedidoPage() {
+  const params = useParams<{ orderId: string }>()
   const { clearCart } = useCart()
   const searchParams = useSearchParams()
   const status = searchParams.get('status')
@@ -40,8 +41,8 @@ export default function PedidoPage({ params }: { params: { orderId: string } }) 
         if (status === 'success') {
           clearCart()
         }
-      } catch (err: any) {
-        setError(err.message)
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Não foi possível consultar o pedido.')
       } finally {
         setLoading(false)
       }
@@ -60,7 +61,7 @@ export default function PedidoPage({ params }: { params: { orderId: string } }) 
       <p><strong>Nome:</strong> {order.fullName}</p>
       <p><strong>Email:</strong> {order.email}</p>
       <p><strong>Status do Pagamento:</strong> {order.statusPagamento}</p>
-      <p><strong>Total:</strong> R$ {(order.total + order.frete).toFixed(2)}</p>
+      <p><strong>Total:</strong> R$ {(Number(order.total) + Number(order.frete)).toFixed(2)}</p>
 
       <h2 className="text-xl font-semibold mt-4">Itens:</h2>
       <ul>

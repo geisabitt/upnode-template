@@ -1,12 +1,14 @@
+import { withModuleApi } from '@/core/lib/module-server'
+import { withAdmin } from '@/core/lib/admin-access'
 import { NextResponse } from 'next/server'
 import { prisma } from '@/core/lib/prisma'
 
 type Params = {
-  params: { id: string } | Promise<{ id: string }>
+  params: Promise<{ id: string }>
 }
 
 /* UPDATE */
-export async function PATCH(req: Request, context: Params) {
+const PATCH = withAdmin(async function PATCH(req: Request, context: Params) {
   try {
     const { id } = await context.params
     const body = await req.json()
@@ -29,10 +31,10 @@ export async function PATCH(req: Request, context: Params) {
     console.error(error)
     return NextResponse.json({ error: 'Erro ao atualizar' }, { status: 500 })
   }
-}
+})
 
 /* DELETE */
-export async function DELETE(req: Request, context: Params) {
+const DELETE = withAdmin(async function DELETE(req: Request, context: Params) {
   try {
     const { id } = await context.params
 
@@ -45,4 +47,9 @@ export async function DELETE(req: Request, context: Params) {
     console.error(error)
     return NextResponse.json({ error: 'Erro ao deletar' }, { status: 500 })
   }
-}
+})
+const modulePATCH = withModuleApi('/api/admin/blog/categories/[id]', PATCH)
+export { modulePATCH as PATCH }
+
+const moduleDELETE = withModuleApi('/api/admin/blog/categories/[id]', DELETE)
+export { moduleDELETE as DELETE }

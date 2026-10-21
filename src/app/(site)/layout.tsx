@@ -1,5 +1,7 @@
-import type { Viewport } from "next";
-
+import { seoConfig } from '@/client/config/seo.config'
+export const dynamic = 'force-dynamic'
+// src/app/(site)/layout.tsx
+import type { Metadata, Viewport } from "next";
 import "@/app/globals.css";
 
 import { CartProvider } from "@/core/context/CartContext";
@@ -7,17 +9,41 @@ import { CartProvider } from "@/core/context/CartContext";
 import { JsonLd } from "@/core/components/seo/JsonLd";
 
 import { siteConfig } from "@/client/config/site.config";
+import { isModuleEnabled } from '@/core/lib/modules'
+import PwaProvider from '@/core/pwa/PwaProvider'
+import { JsonLd } from '@/core/components/JsonLd'
+import { organizationSchema, websiteSchema, localBusinessSchema } from '@/core/lib/seo'
 import Header from "@/client/components/Header";
 import Footer from "@/client/components/Footer";
 
-import { Toaster } from "react-hot-toast";
-import { generatePageMetadata } from "@/core/lib/seo/generate-metadata";
-import { createOrganizationSchema, createWebsiteSchema, createBusinessSchema } from "@/core/components/seo/schema";
-
-export const metadata = generatePageMetadata({
-  pathname: "/",
-});
-
+export const metadata: Metadata = {
+  manifest: isModuleEnabled('pwa') ? '/manifest.webmanifest' : undefined,
+  metadataBase: new URL(siteConfig.seo.url),
+  title: siteConfig.seo.titulo,               
+  description: siteConfig.seo.descricao,       
+  authors: [{ name: siteConfig.nome }],        
+  keywords: siteConfig.seo.keywords,           
+  openGraph: {
+    title: siteConfig.seo.titulo,
+    description: siteConfig.seo.descricao,
+    url: siteConfig.seo.url,                   
+    siteName: siteConfig.nome,
+    locale: "pt_BR",
+    type: "website",
+    images: [{
+      url: siteConfig.seo.ogImage,            
+      width: 1200,
+      height: 630,
+      alt: siteConfig.seo.titulo,
+    }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: siteConfig.nome,
+    description: siteConfig.seo.descricao,
+    images: [siteConfig.seo.ogImage],
+  },
+};
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
@@ -86,6 +112,8 @@ export default function RootLayout({
           color: "var(--color-text-primary)",
         }}
       >
+        <JsonLd data={organizationSchema()} /><JsonLd data={websiteSchema()} /><JsonLd data={localBusinessSchema()} />
+        <PwaProvider enabled={isModuleEnabled('pwa')} />
         <Toaster position="top-right" reverseOrder={false} />
 
         <CartProvider>
@@ -100,8 +128,7 @@ export default function RootLayout({
             >
               {children}
             </main>
-
-            <Footer />
+            <Footer businessAddress={seoConfig.identity.verified && seoConfig.identity.address ? [seoConfig.identity.address.streetAddress, seoConfig.identity.address.addressLocality, seoConfig.identity.address.addressRegion, seoConfig.identity.address.postalCode, seoConfig.identity.address.addressCountry].filter(Boolean).join(', ') : null} />
           </div>
         </CartProvider>
       </body>

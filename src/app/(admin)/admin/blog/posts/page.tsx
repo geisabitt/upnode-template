@@ -1,3 +1,4 @@
+import { requireAdminPage } from '@/core/lib/admin-access'
 import Link from 'next/link'
 import Image from 'next/image'
 import { prisma } from '@/core/lib/prisma'
@@ -6,6 +7,8 @@ import DeletePostButton from '@/core/components/admin/DeletePostButton'
 export const dynamic = 'force-dynamic'
 
 export default async function PostsPage() {
+  await requireAdminPage()
+
   const posts = await prisma.post.findMany({
     include: { category: true },
     orderBy: { createdAt: 'desc' },

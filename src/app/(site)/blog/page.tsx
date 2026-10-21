@@ -1,13 +1,20 @@
+import { isPublishedPost } from '@/core/lib/seo'
+import { pageMetadata } from '@/core/lib/seo'
+import { siteConfig } from '@/client/config/site.config'
+import { requireModule } from '@/core/lib/module-server'
 import { prisma } from '@/core/lib/prisma'
 import Link from 'next/link'
 import Image from 'next/image'
 
 export default async function BlogPage() {
+  requireModule('blog')
+
   const posts = await prisma.post.findMany({
     where: { published: true },
     orderBy: { createdAt: 'desc' },
     select: {
       id: true,
+      published: true,
       title: true,
       slug: true,
       excerpt: true,
@@ -22,7 +29,7 @@ export default async function BlogPage() {
         <h1 className="text-4xl font-bold mb-8 text-center">Blog</h1>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {posts.map((post) => (
+          {posts.filter(isPublishedPost).map((post) => (
             <Link
               key={post.id}
               href={`/blog/${post.slug}`}
@@ -58,3 +65,4 @@ export default async function BlogPage() {
     </div>
   )
 }
+export const metadata = pageMetadata({ title: "Blog", description: siteConfig.seo.descricao, path: '/blog' })

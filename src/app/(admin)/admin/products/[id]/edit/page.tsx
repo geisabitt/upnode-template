@@ -1,3 +1,5 @@
+import { requireModule } from '@/core/lib/module-server'
+import { requireAdminPage } from '@/core/lib/admin-access'
 import { prisma } from '@/core/lib/prisma'
 import ProductForm from '@/core/components/admin/ProductForm'
 
@@ -8,6 +10,9 @@ type EditProductPageProps = {
 }
 
 export default async function EditProductPage({ params }: EditProductPageProps) {
+  requireModule('store')
+  await requireAdminPage()
+
   const { id } = await params
 
   const categories = await prisma.category.findMany({

@@ -24,7 +24,7 @@ export type OrderWithItems = OrderFromAPI & {
   email: string
   cpf: string
   phone: string
-  address: Record<string, any>
+  address: Record<string, string>
   frete: string | number | null
   items: OrderItem[]
 }

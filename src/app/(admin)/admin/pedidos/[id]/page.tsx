@@ -1,8 +1,11 @@
+import { requireAdminPage } from '@/core/lib/admin-access'
 // src/app/(admin)/admin/pedidos/[id]/page.tsx
 import { prisma } from '@/core/lib/prisma'
 import { notFound } from 'next/navigation'
 
 export default async function OrderDetailsPage({ params }: { params: Promise<{ id: string }> }) {
+  await requireAdminPage()
+
   const { id } = await params
 
   if (!id) return notFound()
@@ -16,7 +19,7 @@ export default async function OrderDetailsPage({ params }: { params: Promise<{ i
 
   if (!order) return notFound()
 
-  const address = order.address as any
+  const address = order.address as Record<string, string> | null
 
   return (
     <div className="space-y-6  bg-[var(--color-bg-card)] p-6 rounded-2xl">

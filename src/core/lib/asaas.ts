@@ -36,6 +36,7 @@ export function isSandboxEnvironment(): boolean {
     );
   }
 
+  if (!['sandbox', 'production'].includes(env)) throw new Error('ASAAS_ENV inválido');
   return env === 'sandbox';
 }
 
@@ -76,10 +77,10 @@ export function maskApiKey(apiKey: string): string {
 /**
  * Main fetch wrapper for Asaas API
  */
-export async function asaasFetch<T = any>(
+export async function asaasFetch<T = unknown>(
   endpoint: string,
   method: HttpMethod = 'GET',
-  body?: Record<string, any>
+  body?: Record<string, unknown>
 ): Promise<T> {
   const config = getAsaasConfig();
   const url = `${config.baseUrl}${endpoint}`;
@@ -92,6 +93,8 @@ export async function asaasFetch<T = any>(
   const options: RequestInit = {
     method,
     headers,
+    signal: AbortSignal.timeout(65_000),
+    cache: 'no-store',
   };
 
   if (body && (method === 'POST' || method === 'PUT')) {
@@ -101,35 +104,22 @@ export async function asaasFetch<T = any>(
   try {
     const response = await fetch(url, options);
 
-    const maskedKey = maskApiKey(config.apiKey);
-    const env = config.isSandbox ? 'SANDBOX' : 'PRODUCTION';
-
-    console.log(`📡 [Asaas ${env}] ${method} ${endpoint}`);
-    console.log(`🔑 Key: ${maskedKey}`);
-
     const text = await response.text();
 
-    let data: any = null;
+    let data: unknown = null;
     try {
       data = text ? JSON.parse(text) : null;
     } catch {
-      console.error('❌ Resposta não é JSON:', text);
       throw new Error('Resposta inválida do Asaas');
     }
 
     if (!response.ok) {
-      console.error('🔥 ASAAS ERROR:', data);
 
-      throw new Error(
-        data?.errors?.[0]?.description ||
-        data?.message ||
-        `Erro no Asaas (${response.status})`
-      );
+      throw new Error(`Erro no Asaas (${response.status})`);
     }
 
     return data as T;
   } catch (error) {
-    console.error('🔥 ASAAS FETCH ERROR:', error);
     throw error;
   }
 }
@@ -169,7 +159,7 @@ export async function createAsaasAccount(
  */
 
 export interface AsaasCustomer {
-  document: any;
+  document?: string;
   id: string;
   name: string;
   email: string;

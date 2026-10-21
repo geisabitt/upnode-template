@@ -35,15 +35,6 @@ function generateSignature(publicId: string, timestamp: number, uploadPreset: st
   // CONCATENAR com API_SECRET (sem separador)
   const finalString = stringToSign + CLOUDINARY_API_SECRET
 
-  if (process.env.NODE_ENV === 'development') {
-    console.log('[Cloudinary Debug]')
-    console.log('- Public ID:', publicId)
-    console.log('- Timestamp:', timestamp)
-    console.log('- Upload Preset:', uploadPreset)
-    console.log('- String to Sign:', stringToSign)
-    console.log('- Final String:', finalString)
-    console.log('- Signature:', crypto.createHash('sha1').update(finalString).digest('hex'))
-  }
 
   return crypto.createHash('sha1').update(finalString).digest('hex')
 }
@@ -67,9 +58,7 @@ export async function uploadFileToCloudinaryUnsigned(file: Blob, filename?: stri
   })
 
   if (!response.ok) {
-    const body = await response.text()
-    console.error('Response body:', body)
-    throw new Error(`Cloudinary upload failed: ${response.status} ${body}`)
+    throw new Error(`Cloudinary upload failed: ${response.status}`)
   }
 
   const result = await response.json()
@@ -103,9 +92,7 @@ export async function uploadFileToCloudinarySigned(file: Blob, filename?: string
   })
 
   if (!response.ok) {
-    const body = await response.text()
-    console.error('Response body:', body)
-    throw new Error(`Cloudinary upload failed: ${response.status} ${body}`)
+    throw new Error(`Cloudinary upload failed: ${response.status}`)
   }
 
   const result = await response.json()

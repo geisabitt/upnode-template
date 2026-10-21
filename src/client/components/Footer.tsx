@@ -1,12 +1,15 @@
 // src/core/components/Footer.tsx
 'use client'
 
+import { isPublicLinkEnabled } from '@/core/lib/modules'
+
+
 import Link from "next/link"
 import Image from "next/image"
 import { Settings } from "lucide-react"
 import { siteConfig } from '@/client/config/site.config'
 
-export default function Footer() {
+export default function Footer({ businessAddress = null }: { businessAddress?: string | null }) {
   const whatsappHref = `https://wa.me/${siteConfig.whatsapp}`
 
   return (
@@ -58,7 +61,7 @@ export default function Footer() {
           <div>
             <h4 className="font-semibold mb-4 text-lg">Navegação</h4>
             <ul className="space-y-2 text-sm" style={{ color: 'var(--color-text-tertiary)' }}>
-              {siteConfig.footerNavLinks.map((link) => (
+              {siteConfig.footerNavLinks.filter(link => isPublicLinkEnabled(link.href)).map((link) => (
                 <li key={link.href}>
                   <Link
                     href={link.href}
@@ -75,7 +78,7 @@ export default function Footer() {
           </div>
 
           <div>
-            <h4 className="font-semibold mb-4 text-lg">Contato</h4>
+            <h4 id="contato" className="font-semibold mb-4 text-lg">Contato</h4>
             <p className="text-sm mb-2" style={{ color: 'var(--color-text-tertiary)' }}>
               WhatsApp
             </p>
@@ -89,7 +92,7 @@ export default function Footer() {
               {siteConfig.whatsappDisplay}
             </Link>
             <p className="mt-4 text-sm" style={{ color: 'var(--color-text-tertiary)' }}>
-              {siteConfig.cidade}
+              {businessAddress || siteConfig.cidade}
             </p>
           </div>
 

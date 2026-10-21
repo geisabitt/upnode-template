@@ -1,4 +1,5 @@
 'use client'
+import MercadoPagoPayment from '@/core/components/payment/MercadoPagoPayment'
 
 import { useParams } from 'next/navigation'
 import { useRouter } from 'next/navigation'
@@ -10,6 +11,7 @@ import PixPayment from '@/core/components/payment/PixPayment'
 import { Loader2 } from 'lucide-react'
 
 interface Order {
+  paymentProvider?: string
   id: string
   total: number
   frete: number
@@ -18,7 +20,7 @@ interface Order {
   email: string
   cpf: string
   phone: string
-  address: any
+  address: Record<string, unknown>
   items: Array<{
     name: string
     quantity: number
@@ -86,7 +88,7 @@ export default function PagamentoPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          name: orderData.fullName,
+          orderId: orderData.id,
           email: orderData.email,
           cpf: cpfClean,
           phone: phoneClean,
@@ -100,13 +102,6 @@ export default function PagamentoPage() {
       }
 
       const { customerId } = await res.json()
-
-      // Atualizar o pedido com o customerId
-      await fetch(`/api/orders/${orderData.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ customerId }),
-      })
 
       setOrder({ ...orderData, customerId })
       return customerId
@@ -157,9 +152,9 @@ export default function PagamentoPage() {
         toast.success('Pagamento enviado para análise')
         setPaymentId(paymentData.paymentId)
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Erro no pagamento:', err)
-      toast.error(err.message || 'Erro ao processar pagamento')
+      toast.error(err instanceof Error ? err.message : 'Erro ao processar pagamento')
     } finally {
       setIsProcessing(false)
     }
@@ -194,9 +189,9 @@ export default function PagamentoPage() {
       const paymentData = await paymentRes.json()
       setPaymentId(paymentData.paymentId)
       toast.success('QR Code PIX gerado!')
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Erro ao gerar PIX:', err)
-      toast.error(err.message || 'Erro ao gerar PIX')
+      toast.error(err instanceof Error ? err.message : 'Erro ao gerar PIX')
     } finally {
       setIsProcessing(false)
     }
@@ -241,6 +236,7 @@ export default function PagamentoPage() {
           <div className="rounded-3xl border border-[var(--color-border)] bg-[var(--color-bg-card)] p-6">
             <h1 className="text-2xl font-bold mb-6">Pagamento do Pedido</h1>
 
+            {order.paymentProvider === 'mercado_pago' ? <MercadoPagoPayment orderId={order.id} total={Number(order.total) + Number(order.frete)} email={order.email} /> : <>
             {/* SELETOR DE MÉTODO */}
             <PaymentMethodSelector
               selectedMethod={paymentMethod}
@@ -275,6 +271,7 @@ export default function PagamentoPage() {
                 />
               )}
             </div>
+            </>}
           </div>
         </div>
 

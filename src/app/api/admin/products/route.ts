@@ -1,8 +1,10 @@
+import { withModuleApi } from '@/core/lib/module-server'
+import { withAdmin } from '@/core/lib/admin-access'
 import { NextResponse } from 'next/server'
 import { Prisma } from '@/generated/client'
 import { prisma } from '@/core/lib/prisma'
 
-export async function GET(request: Request) {
+const GET = withAdmin(async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
   const page = Number(searchParams.get('page') || '1')
   const perPage = Number(searchParams.get('perPage') || '10')
@@ -18,7 +20,7 @@ export async function GET(request: Request) {
   ])
 
   return NextResponse.json({ total, page, perPage, products })
-}
+})
 
 type AdminProductCreateRequest = {
   name: string
@@ -35,11 +37,11 @@ type AdminProductCreateRequest = {
   sizes?: { name: string }[]
 }
 
-export async function POST(request: Request) {
+const POST = withAdmin(async function POST(request: Request) {
   const body = (await request.json()) as AdminProductCreateRequest
   const { name, slug, description, price, stock, materials, handmade, categories, youtubeUrl, imageUrls, colors, sizes } = body
 
-  if (!name || !slug || !description || typeof price !== 'number' || typeof stock !== 'number' || !Array.isArray(imageUrls) || imageUrls.length === 0) {
+  if (!name || !slug || !description || typeof price !== 'number' || !Number.isFinite(price) || price <= 0 || typeof stock !== 'number' || !Number.isSafeInteger(stock) || stock < 0 || !Array.isArray(imageUrls) || imageUrls.length === 0) {
     return NextResponse.json({ message: 'Dados do produto incompletos.' }, { status: 400 })
   }
 
@@ -97,5 +99,11 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ message: 'Erro interno ao criar produto.' }, { status: 500 })
   }
-}
+})
 
+
+const moduleGET = withModuleApi('/api/admin/products', GET)
+export { moduleGET as GET }
+
+const modulePOST = withModuleApi('/api/admin/products', POST)
+export { modulePOST as POST }

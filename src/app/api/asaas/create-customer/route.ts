@@ -1,132 +1,37 @@
-/**
- * Creates a new customer in Asaas
- * POST /api/asaas/create-customer
- * 
- * Body:
- * {
- *   name: string (required)
- *   email: string (required)
- *   cpf: string (required, 11 digits)
- *   birthDate: string (required, YYYY-MM-DD)
- *   phone?: string
- *   address?: {
- *     street: string
- *     number: string
- *     neighborhood: string
- *     city: string
- *     state: string
- *     zipCode: string
- *     complement?: string
- *   }
- * }
- */
+import { withModuleApi } from '@/core/lib/module-server'
+import { NextRequest } from 'next/server'
+import { asaasFetch, type AsaasCustomer } from '@/core/lib/asaas'
+import { prisma } from '@/core/lib/prisma'
+import { canAccessOrder } from '@/core/lib/order-access'
+import { mutationGuard, privateJson } from '@/core/lib/request-security'
 
-import { NextRequest, NextResponse } from 'next/server';
-import { asaasFetch, AsaasCustomer } from '@/core/lib/asaas';
-import * as yup from 'yup';
-
-export const runtime = 'nodejs';
-
-const createCustomerSchema = yup.object({
-  name: yup.string().required('Nome é obrigatório').min(3, 'Nome deve ter pelo menos 3 caracteres'),
-  email: yup.string().email('E-mail inválido').required('E-mail é obrigatório'),
-  cpf: yup
-    .string()
-    .required('CPF é obrigatório')
-    .matches(/^\d{11}$/, 'CPF deve conter 11 dígitos sem formatação'),
-  birthDate: yup
-    .string()
-    .required('Data de nascimento é obrigatória')
-    .matches(/^\d{4}-\d{2}-\d{2}$/, 'Data de nascimento deve estar no formato YYYY-MM-DD'),
-  phone: yup.string().matches(/^\d{10,11}$/, 'Telefone deve conter 10 ou 11 dígitos'),
-  address: yup.object({
-    street: yup.string(),
-    number: yup.string(),
-    neighborhood: yup.string(),
-    city: yup.string(),
-    state: yup.string(),
-    zipCode: yup.string().matches(/^\d{8}$/, 'CEP deve conter 8 dígitos'),
-    complement: yup.string(),
-  }),
-});
-
-type CreateCustomerRequest = yup.InferType<typeof createCustomerSchema>;
-
-export async function POST(req: NextRequest) {
+export const runtime = 'nodejs'
+async function POST(req: NextRequest) {
+  const guard = mutationGuard(req, 'asaas-customer')
+  if (guard) return guard
+  const body = await req.json().catch(() => null)
+  if (typeof body?.orderId !== 'string' || !await canAccessOrder(body.orderId)) return privateJson({ error: 'Pedido não encontrado.' }, 404)
   try {
-    const body = await req.json();
-    
-    // Validate request body
-    let validatedData: CreateCustomerRequest;
-    try {
-      validatedData = await createCustomerSchema.validate(body, { abortEarly: false });
-    } catch (validationError: any) {
-      return NextResponse.json(
-        { error: 'Validação falhou', details: validationError.errors },
-        { status: 400 }
-      );
-    }
-    
-    // Format CPF and phone (remove any non-digits)
-    const cpfClean = validatedData.cpf.replace(/\D/g, '');
-    const phoneClean = validatedData.phone?.replace(/\D/g, '');
-    
-    // Build Asaas payload
-    const payload: any = {
-      name: validatedData.name.trim(),
-      email: validatedData.email.trim(),
-      cpfCnpj: cpfClean,
-      birthDate: validatedData.birthDate,
-    };
-    
-    if (phoneClean) {
-      payload.mobilePhone = phoneClean;
-    }
-    
-    if (validatedData.address) {
-      payload.address = {
-        street: validatedData.address.street?.trim(),
-        number: validatedData.address.number?.trim(),
-        neighborhood: validatedData.address.neighborhood?.trim(),
-        city: validatedData.address.city?.trim(),
-        state: validatedData.address.state?.trim(),
-        zipCode: validatedData.address.zipCode?.replace(/\D/g, ''),
-        ...(validatedData.address.complement && {
-          complement: validatedData.address.complement.trim(),
-        }),
-      };
-    }
-    
-    console.log('[Asaas Create Customer] Payload:', {
-      name: payload.name,
-      email: payload.email,
-      document: cpfClean,
-      birthDate: payload.birthDate,
-    });
-    
-    // Create customer in Asaas
-    const customer = await asaasFetch<AsaasCustomer>('/customers', 'POST', payload);
-    
-    console.log('[Asaas Create Customer] Success:', customer.id);
-    
-    return NextResponse.json({
-      success: true,
-      customerId: customer.id,
-      customer: {
-        id: customer.id,
-        name: customer.name,
-        email: customer.email,
-        document: customer.document,
-      },
-    });
-  } catch (error: any) {
-    console.error('[Asaas Create Customer Error]:', error);
-    
-    return NextResponse.json(
-      {
-        error: error.message || 'Erro ao criar cliente no Asaas',
-      },
-      { status: 400 }
-    );
-  }
+    const customerId = await prisma.$transaction(async tx => {
+      // Serialize concurrent customer creation for the same order, across instances.
+      await tx.$queryRaw`SELECT id FROM "Order" WHERE id = ${body.orderId} FOR UPDATE`
+      const order = await tx.order.findUnique({ where: { id: body.orderId } })
+      if (!order) throw new Error('Missing order')
+      if (order.customerId) return order.customerId
+      const address = order.address as Record<string, string>
+      const customer = await asaasFetch<AsaasCustomer>('/customers', 'POST', {
+        name: order.fullName, email: order.email, cpfCnpj: order.cpf.replace(/\D/g, ''),
+        mobilePhone: order.phone.replace(/\D/g, ''), address: address.street,
+        addressNumber: address.number, province: address.neighborhood,
+        postalCode: address.zipCode.replace(/\D/g, ''), externalReference: order.id,
+      })
+      if (!customer?.id) throw new Error('Invalid provider response')
+      await tx.order.update({ where: { id: order.id }, data: { customerId: customer.id } })
+      return customer.id
+    }, { timeout: 90_000 })
+    return privateJson({ success: true, customerId })
+  } catch { return privateJson({ error: 'Não foi possível cadastrar o pagador.' }, 502) }
 }
+
+const modulePOST = withModuleApi('/api/asaas/create-customer', POST)
+export { modulePOST as POST }

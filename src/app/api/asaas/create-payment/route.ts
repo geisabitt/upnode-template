@@ -1,21 +1,19 @@
+import { withModuleApi } from '@/core/lib/module-server'
+import { prisma } from '@/core/lib/prisma'
+import { canAccessOrder } from '@/core/lib/order-access'
+import { mutationGuard, privateJson } from '@/core/lib/request-security'
+import { payableTotal } from '@/core/lib/commerce-security'
 import { NextRequest, NextResponse } from 'next/server';
 import { asaasFetch, AsaasPayment } from '@/core/lib/asaas';
 import * as yup from 'yup';
 
 export const runtime = 'nodejs';
 
-const creditCardSchema = yup.object({
-  creditCardNumber: yup.string().matches(/^\d{16}$/).required(),
-  creditCardExpirationMonth: yup.string().matches(/^(0[1-9]|1[0-2])$/).required(),
-  creditCardExpirationYear: yup.string().matches(/^\d{4}$/).required(),
-  creditCardCvv: yup.string().matches(/^\d{3,4}$/).required(),
-  creditCardHolderName: yup.string().required(),
-});
 
 const createPaymentSchema = yup.object({
-  customerId: yup.string().required(),
+  customerId: yup.string().optional(),
   orderId: yup.string().required(),
-  total: yup.number().required().positive(),
+  total: yup.number().optional(),
 
   billingType: yup
     .string()
@@ -49,7 +47,9 @@ const createPaymentSchema = yup.object({
 
 type CreatePaymentRequest = yup.InferType<typeof createPaymentSchema>;
 
-export async function POST(req: NextRequest) {
+async function POST(req: NextRequest) {
+  const guard = mutationGuard(req, 'asaas-payment')
+  if (guard) return guard
   try {
     const body = await req.json();
 
@@ -58,12 +58,19 @@ export async function POST(req: NextRequest) {
       validatedData = await createPaymentSchema.validate(body, {
         abortEarly: false,
       });
-    } catch (validationError: any) {
+    } catch (validationError) {
       return NextResponse.json(
-        { error: 'Validação falhou', details: validationError.errors },
+        { error: 'Validação falhou', details: validationError instanceof yup.ValidationError ? validationError.errors : ['Dados inválidos.'] },
         { status: 400 }
       );
     }
+
+    if (!await canAccessOrder(validatedData.orderId)) return privateJson({ error: 'Pedido não encontrado.' }, 404)
+    const order = await prisma.order.findUnique({ where: { id: validatedData.orderId } })
+    if (!order || !order.customerId) return privateJson({ error: 'Pagador não cadastrado.' }, 400)
+    if (order.paymentProvider === 'mercado_pago') return privateJson({ error: 'Provedor divergente.' }, 409)
+    if (['approved', 'refunded', 'refund_pending', 'disputed'].includes(order.statusPagamento || '')) return privateJson({ error: 'Pedido já liquidado.' }, 409)
+    const total = payableTotal(order)
 
     // 🔥 validação manual (mais confiável que when)
     if (validatedData.billingType === 'CREDIT_CARD') {
@@ -76,7 +83,7 @@ export async function POST(req: NextRequest) {
     }
 
     const remoteIp =
-      req.headers.get('x-forwarded-for') ||
+      req.headers.get('x-forwarded-for')?.split(',')[0].trim() ||
       req.headers.get('x-real-ip') ||
       '127.0.0.1';
 
@@ -84,10 +91,10 @@ export async function POST(req: NextRequest) {
       validatedData.dueDate || getDefaultDueDate(validatedData.billingType)
     );
 
-    const payload: any = {
-      customer: validatedData.customerId,
+    const payload: Record<string, unknown> = {
+      customer: order.customerId,
       billingType: validatedData.billingType,
-      value: validatedData.total,
+      value: total,
       dueDate,
       description: `Pedido #${validatedData.orderId}`,
       externalReference: validatedData.orderId,
@@ -104,24 +111,19 @@ export async function POST(req: NextRequest) {
         ccv: validatedData.creditCardData.creditCardCvv,
       };
 
-      // ⚠️ ESSENCIAL pro Asaas
+      // Existing form collects no separate holder document/address. Do not invent it.
+      const normalizeName = (name: string) => name.trim().replace(/\s+/g, ' ').toLocaleUpperCase('pt-BR')
+      if (normalizeName(validatedData.creditCardData.creditCardHolderName || '') !== normalizeName(order.fullName))
+        return privateJson({ error: 'Cartão de outro titular exige dados adicionais ainda não disponíveis neste checkout.' }, 400)
+      const address = order.address as Record<string, string>
       payload.creditCardHolderInfo = {
-        name: validatedData.creditCardData.creditCardHolderName,
-        email: 'cliente@email.com',
-        cpfCnpj: '12345678909',
-        postalCode: '00000000',
-        addressNumber: '1',
-        phone: '11999999999',
+        name: order.fullName, email: order.email, cpfCnpj: order.cpf.replace(/\D/g, ''),
+        postalCode: address.zipCode.replace(/\D/g, ''), addressNumber: address.number,
+        phone: order.phone.replace(/\D/g, ''),
       };
     }
 
-    console.log('[Asaas Create Payment] Payload:', {
-      billingType: payload.billingType,
-      value: payload.value,
-      orderId: validatedData.orderId,
-      customerId: validatedData.customerId,
-      dueDate: payload.dueDate,
-    });
+
 
     const payment = await asaasFetch<AsaasPayment>(
       '/payments',
@@ -129,19 +131,17 @@ export async function POST(req: NextRequest) {
       payload
     );
 
-    console.log('[Asaas Create Payment] Success:', payment.id);
 
-    return NextResponse.json({
+    return privateJson({
       success: true,
       paymentId: payment.id,
-      payment,
+      payment: { id: payment.id, status: payment.status },
     });
-  } catch (error: any) {
-    console.error('[Asaas Create Payment Error]:', error);
+  } catch {
 
     return NextResponse.json(
       {
-        error: error.message || 'Erro ao criar cobrança no Asaas',
+        error: 'Não foi possível criar a cobrança.',
       },
       { status: 400 }
     );
@@ -185,3 +185,5 @@ function formatDate(date: Date): string {
   const day = String(date.getDate()).padStart(2, '0');
   return `${year}-${month}-${day}`;
 }
+const modulePOST = withModuleApi('/api/asaas/create-payment', POST)
+export { modulePOST as POST }

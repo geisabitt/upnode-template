@@ -1,4 +1,9 @@
-import { prisma } from '@/core/lib/prisma'
+import { requireModule } from '@/core/lib/module-server'
+import { getBlogCategory } from '@/core/lib/seo-data'
+import { pageMetadata, isIndexablePost, isPublishedPost, slugPath } from '@/core/lib/seo'
+import { seoConfig } from '@/client/config/seo.config'
+import { notFound } from 'next/navigation'
+import { Breadcrumbs } from '@/core/components/Breadcrumbs'
 import Link from 'next/link'
 import Image from 'next/image'
 
@@ -9,24 +14,19 @@ type Props = {
 }
 
 export default async function CategoriaPage({ params }: Props) {
+  requireModule('blog')
+
   const { slug } = await params
 
-  const category = await prisma.blogCategory.findUnique({
-    where: { slug },
-    include: {
-      posts: {
-        where: { published: true },
-        orderBy: { createdAt: 'desc' },
-      },
-    },
-  })
+  const category = await getBlogCategory(slug)
 
   if (!category) {
-    return <div className="p-10 text-center">Categoria não encontrada</div>
+    notFound()
   }
 
   return (
     <main className="max-w-6xl mx-auto px-6 py-12 space-y-10">
+      <Breadcrumbs items={[{ name: 'Início', path: '/' }, { name: 'Blog', path: '/blog' }, { name: category.name, path: slugPath('/blog/categoria/', category.slug) }]} />
 
       {/* HEADER */}
       <div className="text-center space-y-4">
@@ -49,7 +49,7 @@ export default async function CategoriaPage({ params }: Props) {
       ) : (
         <div className="grid md:grid-cols-3 gap-6">
 
-          {category.posts.map((post) => (
+          {category.posts.filter(isPublishedPost).map((post) => (
             <Link
               key={post.id}
               href={`/blog/${post.slug}`}
@@ -87,4 +87,13 @@ export default async function CategoriaPage({ params }: Props) {
 
     </main>
   )
+}
+export async function generateMetadata({ params }: Props) {
+  requireModule('blog')
+  const { slug } = await params
+  const category = await getBlogCategory(slug)
+  if (!category) notFound()
+  const editorial = seoConfig.records.blogCategories[slug]
+  return pageMetadata({ title: editorial?.title || category.name, description: editorial?.description || category.description,
+    image: editorial?.image || category.image, path: slugPath('/blog/categoria/', slug), index: editorial?.published !== false && editorial?.index !== false && !!category.name.trim() && category.posts.some(isIndexablePost) })
 }

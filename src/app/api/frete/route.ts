@@ -1,3 +1,6 @@
+import { withModuleApi } from '@/core/lib/module-server'
+import { mutationGuard, privateJson } from '@/core/lib/request-security'
+import { signShippingQuote } from '@/core/lib/commerce-security'
 // src/app/api/frete/route.ts
 import { NextResponse } from 'next/server'
 
@@ -9,11 +12,14 @@ interface MelhorEnvioResponse {
   error?: string
 }
 
-export async function POST(request: Request) {
+async function POST(request: Request) {
+  const guard = mutationGuard(request, 'shipping')
+  if (guard) return guard
+  if (!process.env.AUTH_JWT_SECRET || !process.env.MELHOR_ENVIO_TOKEN) return privateJson({ error: 'Frete indisponível.' }, 503)
   try {
-    const { cepDestino, quantidade } = await request.json()
-
-    console.log('📦 REQUEST:', { cepDestino, quantidade })
+    const { cepDestino: inputZip, quantidade } = await request.json()
+    const cepDestino = typeof inputZip === 'string' ? inputZip.replace(/\D/g, '') : ''
+    if (!/^\d{8}$/.test(cepDestino) || !Number.isSafeInteger(quantidade) || quantidade <= 0) return privateJson({ error: 'CEP ou quantidade inválidos.' }, 400)
 
     const response = await fetch(
       'https://www.melhorenvio.com.br/api/v2/me/shipment/calculate',
@@ -43,10 +49,7 @@ export async function POST(request: Request) {
 
     const data = await response.json()
 
-    console.log('🚚 RESPOSTA BRUTA:', data)
-
     if (!response.ok) {
-      console.error('❌ ERRO API:', data)
       return NextResponse.json({ error: 'Erro na API' }, { status: 400 })
     }
 
@@ -62,20 +65,20 @@ export async function POST(request: Request) {
           service.error &&
           service.error.includes('não atende')
 
-        return isPacOrSedex && !hasError && service.price
+        return isPacOrSedex && !hasError && !service.error && service.price && Number.isFinite(Number(service.price)) && Number(service.price) >= 0
       })
       .map((service: MelhorEnvioResponse) => ({
         id: service.id,
         name: service.name,
         price: Number(service.price).toFixed(2),
         delivery_time: service.delivery_time,
+        quoteToken: signShippingQuote(cepDestino, quantidade, Number(service.price).toFixed(2), service.id),
       }))
 
-    console.log('✅ RESULTADO FINAL:', resultado)
-
     return NextResponse.json(resultado)
-  } catch (err: any) {
-    console.error('💥 ERRO:', err)
+  } catch {
     return NextResponse.json({ error: 'Erro interno' }, { status: 500 })
   }
 }
+const modulePOST = withModuleApi('/api/frete', POST)
+export { modulePOST as POST }

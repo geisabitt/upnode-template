@@ -1,5 +1,6 @@
 import jwt from 'jsonwebtoken'
-import { AdminUserPayload } from '@/core/lib/auth'
+import type { AdminUserPayload } from '@/core/lib/auth'
+import { isAdminSession } from '@/core/lib/auth-token'
 
 const JWT_SECRET = process.env.AUTH_JWT_SECRET!
 
@@ -10,15 +11,16 @@ const JWT_MAX_AGE_SECONDS = 60 * 60 * 24 * 7 // 7 days
 
 export function createAuthToken(payload: AdminUserPayload): string {
   return jwt.sign(payload, JWT_SECRET, {
+    algorithm: 'HS256',
     expiresIn: JWT_MAX_AGE_SECONDS
   })
 }
 
 export function verifyAuthToken(token: string): AdminUserPayload | null {
   try {
-    const decoded = jwt.verify(token, JWT_SECRET)
-    return decoded as AdminUserPayload
-  } catch (error) {
+    const decoded = jwt.verify(token, JWT_SECRET, { algorithms: ['HS256'], maxAge: '7d' })
+    return isAdminSession(decoded) ? decoded : null
+  } catch {
     return null
   }
 }

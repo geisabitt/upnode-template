@@ -1,3 +1,4 @@
+import { requireAdminPage } from '@/core/lib/admin-access'
 import { prisma } from "@/core/lib/prisma"
 import { notFound } from "next/navigation"
 import PageForm from "@/core/components/admin/PageForm"
@@ -9,6 +10,8 @@ type PageProps = {
 }
 
 export default async function Page({ params }: PageProps) {
+  await requireAdminPage()
+
   const { id } = await params
 
   const page = await prisma.customPage.findUnique({

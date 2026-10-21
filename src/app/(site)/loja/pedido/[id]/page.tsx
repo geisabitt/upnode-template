@@ -1,3 +1,6 @@
+import { requireModule } from '@/core/lib/module-server'
+import { canAccessOrder } from '@/core/lib/order-access'
+import { redirect } from 'next/navigation'
 import { prisma } from '@/core/lib/prisma'
 import { notFound } from 'next/navigation'
 import { PagarNovamenteButton } from '@/core/components/PagarNovamenteButton'
@@ -7,33 +10,19 @@ interface PedidoPageProps {
   searchParams?: Promise<{ status?: string; payment_id?: string }>
 }
 
-export default async function PedidoPage({ params, searchParams }: PedidoPageProps) {
-  const { id } = await params
-  const query = await searchParams
+export default async function PedidoPage({ params }: PedidoPageProps) {
+  requireModule('store')
 
-  const statusQuery = query?.status
-  const paymentId = query?.payment_id
+  const { id } = await params
+  if (!await canAccessOrder(id)) redirect('/loja/meus-pedidos')
 
   // 🥇 BUSCA PEDIDO PRIMEIRO
-  let order = await prisma.order.findUnique({
+  const order = await prisma.order.findUnique({
     where: { id },
     include: { items: true },
   })
 
   if (!order) return notFound()
-
-  if (
-    statusQuery === 'approved' &&
-    paymentId &&
-    order.statusPagamento !== 'approved'
-  ) {
-    await prisma.order.update({
-      where: { id },
-      data: { statusPagamento: 'approved' },
-    })
-
-    order = { ...order, statusPagamento: 'approved' }
-  }
 
   // 🧠 STATUS
   const statusText = {
@@ -44,7 +33,7 @@ export default async function PedidoPage({ params, searchParams }: PedidoPagePro
     success: 'Pedido criado. Aguarde confirmação do pagamento.',
   }
 
-  const displayStatus = order.statusPagamento || statusQuery || 'success'
+  const displayStatus = order.statusPagamento || 'pending'
 
   // 💰 VALORES
   const totalProdutos =
@@ -56,11 +45,6 @@ export default async function PedidoPage({ params, searchParams }: PedidoPagePro
   const frete = order.frete ?? 0
   const totalGeral = Number(totalProdutos) + Number(frete)
 
-  const itemsForButton = order.items.map((item) => ({
-    name: item.name,
-    quantity: item.quantity,
-    price: Number(item.price),
-  }))
 
   return (
     <main className="max-w-2xl mx-auto py-10 px-4 min-h-screen bg-[var(--color-bg-primary)] text-[var(--color-text-primary)]">

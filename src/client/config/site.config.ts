@@ -30,7 +30,7 @@ export const siteConfig = {
     { label: "Sobre",    href: "/sobre" },
     { label: "Loja",     href: "/loja" },
     { label: "Blog",     href: "/blog" },
-    { label: "Contato",  href: "/contato" },
+    { label: "Contato",  href: "/#contato" },
   ],
 
   // Navegação mobile
@@ -39,7 +39,7 @@ export const siteConfig = {
     { label: "Sobre",    href: "/sobre" },
     { label: "Loja",     href: "/loja" },
     { label: "Carrinho", href: "/loja/carrinho" },
-    { label: "Contato",  href: "/contato" },
+    { label: "Contato",  href: "/#contato" },
   ],
 
   // Footer — benefícios
@@ -53,7 +53,7 @@ export const siteConfig = {
   footerNavLinks: [
     { label: "Início",  href: "/" },
     { label: "Sobre",   href: "/sobre" },
-    { label: "Contato", href: "/contato" },
+    { label: "Contato", href: "/#contato" },
   ],
 
   footerDescription: "Descrição do seu negócio aqui.",

@@ -1,6 +1,9 @@
 // src/core/components/Header.tsx
 'use client'
 
+import { isPublicLinkEnabled, isModuleEnabled } from '@/core/lib/modules'
+
+
 import { useState } from 'react'
 import Link from "next/link"
 import Image from "next/image"
@@ -32,10 +35,12 @@ export default function Header() {
           className="hidden md:flex gap-8 text-sm"
           style={{ color: 'var(--color-text-primary)' }}
         >
-          {siteConfig.navLinks.map((link) => (
+          {isModuleEnabled('portfolio') && <Link href="/portfolio">Portfólio</Link>}
+          {isModuleEnabled('services') && <Link href="/servicos">Serviços</Link>}
+          {siteConfig.navLinks.filter(link => isPublicLinkEnabled(link.href)).map((link) => (
             <Link key={link.href} href={link.href}>{link.label}</Link>
           ))}
-          <Link href="/loja/carrinho" className="inline-flex items-center gap-2">
+          {isPublicLinkEnabled("/loja/carrinho") && (<Link href="/loja/carrinho" className="inline-flex items-center gap-2">
             <ShoppingCart className="w-4 h-4" />
             Carrinho
             {totalItems > 0 && (
@@ -46,7 +51,7 @@ export default function Header() {
                 {totalItems}
               </span>
             )}
-          </Link>
+          </Link>)}
         </nav>
 
         <a
@@ -74,14 +79,14 @@ export default function Header() {
 
         {/* Mobile */}
         <div className="flex items-center gap-3 md:hidden">
-          <Link
+          {isPublicLinkEnabled("/loja") && (<Link
             href="/loja"
             className="text-sm font-semibold"
             style={{ color: 'var(--color-text-primary)' }}
           >
             Loja
-          </Link>
-          <Link href="/loja/carrinho" className="relative">
+          </Link>)}
+          {isPublicLinkEnabled("/loja/carrinho") && (<Link href="/loja/carrinho" className="relative">
             <ShoppingCart className="w-5 h-5" style={{ color: 'var(--color-text-primary)' }} />
             {totalItems > 0 && (
               <span
@@ -91,7 +96,7 @@ export default function Header() {
                 {totalItems}
               </span>
             )}
-          </Link>
+          </Link>)}
           <button
             onClick={() => setOpen(!open)}
             aria-label="Abrir menu"
@@ -110,7 +115,9 @@ export default function Header() {
             color: 'var(--color-text-primary)',
           }}
         >
-          {siteConfig.mobileNavLinks.map((link) => (
+          {isModuleEnabled('portfolio') && <Link href="/portfolio" onClick={() => setOpen(false)}>Portfólio</Link>}
+          {isModuleEnabled('services') && <Link href="/servicos" onClick={() => setOpen(false)}>Serviços</Link>}
+          {siteConfig.mobileNavLinks.filter(link => isPublicLinkEnabled(link.href)).map((link) => (
             <Link key={link.href} href={link.href} onClick={() => setOpen(false)}>
               {link.label}
             </Link>

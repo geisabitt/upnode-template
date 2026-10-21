@@ -1,7 +1,10 @@
+import { requireAdminPage } from '@/core/lib/admin-access'
 import { prisma } from "@/core/lib/prisma"
 import Link from "next/link"
 
 export default async function PagesList() {
+  await requireAdminPage()
+
   const pages = await prisma.customPage.findMany({
     orderBy: { createdAt: "desc" }
   })

@@ -1,11 +1,14 @@
 'use client'
 
+import { isPublicLinkEnabled } from '@/core/lib/modules'
+
+
 import { siteConfig } from '@/client/config/site.config'
 
 export function HeroButtons() {
   return (
     <div className="flex flex-wrap gap-4">
-      <a
+      {isPublicLinkEnabled("/loja") && (<a
         href="/loja"
         className="inline-block px-6 py-3 font-semibold transition rounded-lg"
         style={{ backgroundColor: 'var(--color-accent)', color: 'var(--color-text-light)' }}
@@ -13,7 +16,7 @@ export function HeroButtons() {
         onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'var(--color-accent)')}
       >
         Ver planos
-      </a>
+      </a>)}
       <a
         href="/personalizado"
         className="inline-block px-6 py-3 transition rounded-lg"

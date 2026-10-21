@@ -1,74 +1,32 @@
+import { requireModule } from '@/core/lib/module-server'
 // app/loja/categoria/[slug]/page.tsx
 import Link from 'next/link'
 import Image from 'next/image'
 import { notFound } from 'next/navigation'
-import { prisma } from '@/core/lib/prisma'
-import { Prisma } from '@/generated/client'
+import { getProductCategory } from '@/core/lib/seo-data'
+import { pageMetadata, isIndexableProduct, slugPath } from '@/core/lib/seo'
+import { seoConfig } from '@/client/config/seo.config'
+import { Breadcrumbs } from '@/core/components/Breadcrumbs'
 
 interface CategoriaPageProps {
   params: Promise<{ slug: string }>
 }
 
-type ProductWithRelations = Prisma.ProductGetPayload<{
-  include: {
-    colors: true
-    sizes: true
-    images: true
-  }
-}>
-
-async function getProdutosByCategoriaSlug(
-  slug: string
-): Promise<{ produtos: ProductWithRelations[]; categoriaNome: string }> {
-  if (slug === 'todos') {
-    const produtos = await prisma.product.findMany({
-      include: {
-        colors: true,
-        sizes: true,
-        images: { orderBy: { createdAt: 'desc' } },
-      },
-      orderBy: { createdAt: 'desc' },
-    })
-
-    return {
-      produtos,
-      categoriaNome: 'Todos os Produtos',
-    }
-  }
-
-  const categoria = await prisma.category.findUnique({
-    where: { slug },
-    include: {
-      products: {
-        include: {
-          colors: true,
-          sizes: true,
-          images: { orderBy: { createdAt: 'desc' } },
-        },
-        orderBy: { createdAt: 'desc' },
-      },
-    },
-  })
-
-  if (!categoria) {
-    return { produtos: [], categoriaNome: '' }
-  }
-
-  return {
-    produtos: categoria.products,
-    categoriaNome: categoria.name,
-  }
-}
-
 export default async function CategoriaPage({ params }: CategoriaPageProps) {
+  requireModule('store')
+
   const { slug } = await params
 
-  const { produtos, categoriaNome } = await getProdutosByCategoriaSlug(slug)
+  const category = await getProductCategory(slug)
+  if (!category) notFound()
+  const produtos = category.products
+  const categoriaNome = category.name
 
   if (!categoriaNome) return notFound()
 
   return (
     <main>
+      <Breadcrumbs items={[{ name: 'Início', path: '/' }, { name: 'Loja', path: '/loja' }, { name: categoriaNome, path: slugPath('/loja/categoria/', slug) }]} />
       <section className="px-4 py-6 md:px-20 md:py-20">
         <header className="max-w-6xl mx-auto mb-8 md:mb-10">
           <h1
@@ -151,4 +109,14 @@ export default async function CategoriaPage({ params }: CategoriaPageProps) {
       </section>
     </main>
   )
+}
+export async function generateMetadata({ params }: CategoriaPageProps) {
+  requireModule('store')
+  const { slug } = await params
+  const category = await getProductCategory(slug)
+  if (!category) notFound()
+  const editorial = seoConfig.records.categories[slug]
+  return pageMetadata({ title: editorial?.title || category.name, description: editorial?.description || category.name,
+    image: editorial?.image, path: slug === 'todos' ? '/loja' : slugPath('/loja/categoria/', slug),
+    index: slug !== 'todos' && editorial?.published !== false && editorial?.index !== false && !!category.name.trim() && category.products.some(isIndexableProduct) })
 }

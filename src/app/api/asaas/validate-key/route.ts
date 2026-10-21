@@ -1,14 +1,17 @@
+import { withModuleApi } from '@/core/lib/module-server'
+import { withAdmin } from '@/core/lib/admin-access'
 /**
  * Validates Asaas API key by making a simple test request
  * GET /api/asaas/validate-key
  */
 
-import { NextRequest, NextResponse } from 'next/server';
-import { asaasFetch, maskApiKey, getAsaasConfig } from '@/core/lib/asaas';
+import { NextResponse } from 'next/server';
+import { asaasFetch, getAsaasConfig } from '@/core/lib/asaas';
 
 export const runtime = 'nodejs';
 
-export async function GET(req: NextRequest) {
+async function GET(request: Request) {
+  void request
   try {
     const config = getAsaasConfig();
     const env = config.isSandbox ? 'SANDBOX' : 'PRODUCTION';
@@ -21,18 +24,22 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({
       valid: true,
       environment: config.isSandbox ? 'sandbox' : 'production',
-      apiKey: maskApiKey(config.apiKey),
       message: `API key válida para ${env}`,
     });
-  } catch (error: any) {
-    console.error('[Asaas Validate Error]:', error);
+  } catch {
     
     return NextResponse.json(
       {
         valid: false,
-        error: error.message || 'Erro ao validar chave Asaas',
+        error: 'Não foi possível validar a integração Asaas.',
       },
       { status: 400 }
     );
   }
 }
+
+const securedGET = withAdmin(GET)
+
+
+const moduleGET = withModuleApi('/api/asaas/validate-key', securedGET)
+export { moduleGET as GET }
